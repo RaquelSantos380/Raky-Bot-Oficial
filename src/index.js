@@ -76,6 +76,8 @@ import { load } from "./loader.js";
 import { badMacHandler } from "./utils/badMacHandler.js";
 import { bannerLog, errorLog, infoLog, warningLog } from "./utils/logger.js";
 import { startGroupScheduler } from "./services/groupScheduler.js";
+import { iniciarAgendamentos } from "./commands/admin/divulgar.js";
+import http from "node:http";
 
 process.on("uncaughtException", (error) => {
   if (badMacHandler.handleError(error, "uncaughtException")) {
@@ -118,7 +120,7 @@ async function startBot() {
     const socket = await connect();
 
     load(socket);
-
+    iniciarAgendamentos(socket);
     startGroupScheduler(socket);
 
     setInterval(() => {
@@ -146,3 +148,12 @@ async function startBot() {
 }
 
 startBot();
+
+// Servidor HTTP fake para o Render não derrubar
+const PORT = process.env.PORT || 10000;
+http.createServer((req, res) => {
+  res.writeHead(200, { "Content-Type": "text/plain" });
+  res.end("Raky BOT online!");
+}).listen(PORT, () => {
+  console.log(`[RENDER] Servidor HTTP rodando na porta ${PORT}`);
+});
