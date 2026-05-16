@@ -149,7 +149,7 @@ async function startBot() {
 
 startBot();
 
-// Servidor HTTP fake para o Render não derrubar
+// Servidor HTTP para o Render não derrubar
 const PORT = process.env.PORT || 10000;
 http.createServer((req, res) => {
   res.writeHead(200, { "Content-Type": "text/plain" });
