@@ -3,14 +3,14 @@
  *
  * @author Dev Gui
  */
-import pkg from "../package.json" with { type: "json" };
+import { readFileSync } from "fs";
+const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf-8"));
 import { BOT_NAME } from "./config.js";
 import { getPrefix } from "./utils/database.js";
 import { readMore } from "./utils/index.js";
 
 export function menuMessage(groupJid) {
   const date = new Date();
-
   const prefix = getPrefix(groupJid);
 
   return `╭━━⪩ ${BOT_NAME} ⪨━━${readMore()}
@@ -50,6 +50,10 @@ export function menuMessage(groupJid) {
 ▢ • ${prefix}link-grupo
 ▢ • ${prefix}exit (1/0)
 ▢ • ${prefix}anti-link (1/0)
+▢ • ${prefix}anti-link-warn (1/0)
+▢ • ${prefix}anti-flood (1/0)
+▢ • ${prefix}bloquear-palavra | add | palavra
+▢ • ${prefix}lista-negra | add | @user
 ▢ • ${prefix}only-admin (1/0)
 ▢
 ╰━━─「⚙️」─━━
@@ -69,20 +73,26 @@ export function menuMessage(groupJid) {
 ▢ • ${prefix}ttp
 ▢ • ${prefix}rename
 ▢ • ${prefix}fake-chat
-▢ • ${prefix}gerar-link
 ▢ • ${prefix}suporte
 ▢
 ╰━━─「👥」─━━
 
 ╭━━⪩ DIVERSÃO ⪨━━
 ▢
-▢ • ${prefix}abracar
-▢ • ${prefix}beijar
+▢ • ${prefix}abracar | @user
+▢ • ${prefix}beijar | @user
 ▢ • ${prefix}dado
-▢ • ${prefix}jantar
-▢ • ${prefix}lutar
-▢ • ${prefix}matar
-▢ • ${prefix}socar
+▢ • ${prefix}jantar | @user
+▢ • ${prefix}lutar | @user
+▢ • ${prefix}matar | @user
+▢ • ${prefix}socar | @user
+▢ • ${prefix}jogodavelha | @jogador
+▢ • ${prefix}jogodavelha jogar | 1
+▢ • ${prefix}forca iniciar
+▢ • ${prefix}forca letra | a
+▢ • ${prefix}animal
+▢ • ${prefix}animal chutar | nome
+▢ • ${prefix}pensao | @user | motivo
 ▢
 ╰━━─「🎡」─━━
 
@@ -96,5 +106,7 @@ export function menuMessage(groupJid) {
 ▢ • ${prefix}play-audio
 ▢ • ${prefix}play-video
 ▢
-╰━━─「📥」─━━`;
+╰━━─「📥」─━━
+
+⚠️ Use | para separar os argumentos!`;
 }
