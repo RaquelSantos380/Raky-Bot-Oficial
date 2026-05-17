@@ -1,41 +1,33 @@
 import { PREFIX } from "../../config.js";
-import { InvalidParameterError } from "../../errors/index.js";
 
 const jogos = {};
 
 export default {
   name: "jogo-da-velha",
   description: "Jogo da velha multiplayer no grupo.",
-  commands: ["jogodavelha", "velha", "tictactoe", "ttt"],
-  usage: `${PREFIX}jogodavelha | @jogador\n${PREFIX}jogodavelha jogar | posição\n${PREFIX}jogodavelha tabuleiro`,
+  commands: ["jogodavelha", "velha", "ttt"],
+  usage: `${PREFIX}velha\n${PREFIX}velha jogar | posição`,
 
   handle: async ({
     args,
     remoteJid,
     userLid,
     sendReply,
-    sendSuccessReply,
     sendErrorReply,
   }) => {
     const action = args[0]?.toLowerCase();
     const gameKey = remoteJid;
 
-    // Mostrar tabuleiro
-    if (!action || action === "tabuleiro" || action === "status") {
+    // Iniciar ou mostrar
+    if (!action) {
       const jogo = jogos[gameKey];
-      if (!jogo) return sendReply("❌ Nenhum jogo em andamento!\nUse `" + PREFIX + "jogodavelha @jogador` para iniciar.");
-      return sendReply(formatarTabuleiro(jogo));
-    }
+      if (jogo) return sendReply(formatarTabuleiro(jogo) + `\n\nVez de: @${jogo.vez.split("@")[0]} (${jogo.simbolo})`);
 
-    // Iniciar novo jogo
-    if (action === "novo" || action === "start" || action === "iniciar") {
-      const player2 = args[1];
-      if (!player2) throw new InvalidParameterError("Marque um jogador!\nEx: `" + PREFIX + "jogodavelha @jogador`");
-
+      // Novo jogo
       jogos[gameKey] = {
-        tabuleiro: ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"],
+        tabuleiro: ["1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣","9️⃣"],
         jogador1: userLid,
-        jogador2: player2.replace("@", "").trim() + "@lid",
+        jogador2: null,
         vez: userLid,
         simbolo: "❌",
         ativo: true
@@ -44,51 +36,58 @@ export default {
       return sendReply(
         `🎮 *Jogo da Velha*\n\n` +
         `${formatarTabuleiro(jogos[gameKey])}\n\n` +
-        `❌ ${userLid.split("@")[0]} vs ⭕ ${player2.replace("@", "").trim()}\n` +
-        `Vez de: @${userLid.split("@")[0]}`
+        `❌ @${userLid.split("@")[0]} iniciou o jogo!\n` +
+        `⭕ Alguém digite \`${PREFIX}velha entrar\` para jogar!`
       );
     }
 
-    // Jogar
-    if (action === "jogar" || action === "play" || action === "p") {
+    // Entrar no jogo
+    if (action === "entrar") {
       const jogo = jogos[gameKey];
-      if (!jogo) return sendReply("❌ Nenhum jogo em andamento!\nUse `" + PREFIX + "jogodavelha @jogador` para iniciar.");
-      if (!jogo.ativo) return sendReply("❌ Este jogo já acabou!");
-      if (jogo.vez !== userLid) return sendReply("❌ Não é sua vez!");
+      if (!jogo) return sendReply("Nenhum jogo! Use `/velha` para iniciar.");
+      if (jogo.jogador2) return sendReply("Jogo já tem 2 jogadores!");
+      if (jogo.jogador1 === userLid) return sendReply("Você já é o jogador 1!");
 
-      const posicao = parseInt(args[1]) - 1;
-      if (isNaN(posicao) || posicao < 0 || posicao > 8) throw new InvalidParameterError("Escolha uma posição de 1 a 9!");
-      if (jogo.tabuleiro[posicao] === "❌" || jogo.tabuleiro[posicao] === "⭕") return sendReply("❌ Posição ocupada!");
-
-      jogo.tabuleiro[posicao] = jogo.simbolo;
-
-      // Verificar vitória
-      const vitoria = verificarVitoria(jogo.tabuleiro);
-      if (vitoria) {
-        jogo.ativo = false;
-        return sendReply(
-          `🎉 *VITÓRIA!*\n\n${formatarTabuleiro(jogo)}\n\n` +
-          `${jogo.simbolo} @${userLid.split("@")[0]} venceu! 🏆`
-        );
-      }
-
-      // Verificar velha
-      if (jogo.tabuleiro.every(c => c === "❌" || c === "⭕")) {
-        jogo.ativo = false;
-        return sendReply(`🤝 *VELHA!*\n\n${formatarTabuleiro(jogo)}\n\nEmpate!`);
-      }
-
-      // Passar vez
-      jogo.vez = jogo.vez === jogo.jogador1 ? jogo.jogador2 : jogo.jogador1;
-      jogo.simbolo = jogo.simbolo === "❌" ? "⭕" : "❌";
-
+      jogo.jogador2 = userLid;
       return sendReply(
         `${formatarTabuleiro(jogo)}\n\n` +
+        `❌ @${jogo.jogador1.split("@")[0]} vs ⭕ @${jogo.jogador2.split("@")[0]}\n` +
         `Vez de: @${jogo.vez.split("@")[0]} (${jogo.simbolo})`
       );
     }
 
-    throw new InvalidParameterError("Use: `" + PREFIX + "jogodavelha @jogador` ou `" + PREFIX + "jogodavelha jogar 1`");
+    // Jogar
+    if (action === "jogar" || action === "j") {
+      const jogo = jogos[gameKey];
+      if (!jogo) return sendReply("Nenhum jogo! Use `/velha` para iniciar.");
+      if (!jogo.jogador2) return sendReply("Esperando oponente! Digite `/velha entrar`");
+      if (!jogo.ativo) return sendReply("Jogo já acabou!");
+      if (jogo.vez !== userLid) return sendReply("Não é sua vez!");
+
+      const posicao = parseInt(args[1]) - 1;
+      if (isNaN(posicao) || posicao < 0 || posicao > 8) return sendReply("Escolha 1 a 9!");
+
+      if (jogo.tabuleiro[posicao] === "❌" || jogo.tabuleiro[posicao] === "⭕") return sendReply("Ocupado!");
+
+      jogo.tabuleiro[posicao] = jogo.simbolo;
+
+      if (verificarVitoria(jogo.tabuleiro)) {
+        jogo.ativo = false;
+        return sendReply(`🎉 *VITÓRIA!*\n${formatarTabuleiro(jogo)}\n\n${jogo.simbolo} @${userLid.split("@")[0]} venceu! 🏆`);
+      }
+
+      if (jogo.tabuleiro.every(c => c === "❌" || c === "⭕")) {
+        jogo.ativo = false;
+        return sendReply(`🤝 *VELHA!*\n${formatarTabuleiro(jogo)}\nEmpate!`);
+      }
+
+      jogo.vez = jogo.vez === jogo.jogador1 ? jogo.jogador2 : jogo.jogador1;
+      jogo.simbolo = jogo.simbolo === "❌" ? "⭕" : "❌";
+
+      return sendReply(`${formatarTabuleiro(jogo)}\n\nVez: @${jogo.vez.split("@")[0]} (${jogo.simbolo})`);
+    }
+
+    return sendReply("Use: `/velha` para iniciar, `/velha entrar` para jogar, `/velha jogar | 1`");
   },
 };
 
@@ -98,10 +97,6 @@ function formatarTabuleiro(jogo) {
 }
 
 function verificarVitoria(tab) {
-  const v = [
-    [0,1,2],[3,4,5],[6,7,8], // linhas
-    [0,3,6],[1,4,7],[2,5,8], // colunas
-    [0,4,8],[2,4,6]          // diagonais
-  ];
+  const v = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
   return v.some(([a,b,c]) => tab[a] === tab[b] && tab[b] === tab[c]);
 }
