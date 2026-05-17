@@ -79,13 +79,13 @@ export function menuMessage(groupJid) {
 
 ╭━━⪩ DIVERSÃO ⪨━━
 ▢
-▢ • ${prefix}abracar | @user
-▢ • ${prefix}beijar | @user
+▢ • ${prefix}abracar @user
+▢ • ${prefix}beijar @user
 ▢ • ${prefix}dado
-▢ • ${prefix}jantar | @user
-▢ • ${prefix}lutar | @user
-▢ • ${prefix}matar | @user
-▢ • ${prefix}socar | @user
+▢ • ${prefix}jantar @user
+▢ • ${prefix}lutar @user
+▢ • ${prefix}matar @user
+▢ • ${prefix}socar @user
 ▢ • ${prefix}jogodavelha | @jogador
 ▢ • ${prefix}jogodavelha jogar | 1
 ▢ • ${prefix}forca iniciar
