@@ -86,17 +86,25 @@ export function menuMessage(groupJid) {
 ▢ • ${prefix}lutar @user
 ▢ • ${prefix}matar @user
 ▢ • ${prefix}socar @user
-▢ • ${prefix}velha — Inicia jogo da velha
-▢ • ${prefix}velha entrar — Entra no jogo
-▢ • ${prefix}velha jogar | 1 — Joga
-▢ • ${prefix}forca iniciar
-▢ • ${prefix}forca l | a
-▢ • ${prefix}forca chutar | palavra
-▢ • ${prefix}animal
-▢ • ${prefix}animal chutar | nome
-▢ • ${prefix}pensao | @user | motivo
+▢ • ${prefix}velha — Jogo da Velha
+▢ • ${prefix}forca — Jogo da Forca
+▢ • ${prefix}animal — Acerte o Animal
+▢ • ${prefix}pensao @user — Cobrar Pensão 😂
 ▢
 ╰━━─「🎡」─━━
+
+╭━━⪩ 🎲 RPG ⪨━━
+▢
+▢ • ${prefix}rpg criar | Nome | classe
+▢ • ${prefix}rpg status
+▢ • ${prefix}rpg perfil | @jogador
+▢ • ${prefix}rpg batalha
+▢ • ${prefix}rpg atacar
+▢ • ${prefix}rpg defender
+▢ • ${prefix}rpg curar
+▢ • ${prefix}rpg ranking
+▢
+╰━━─「⚔️」─━━
 
 ╭━━⪩ DOWNLOADS ⪨━━
 ▢
