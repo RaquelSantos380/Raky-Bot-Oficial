@@ -52,8 +52,8 @@ export function menuMessage(groupJid) {
 ▢ • ${prefix}anti-link (1/0)
 ▢ • ${prefix}anti-link-warn (1/0)
 ▢ • ${prefix}anti-flood (1/0)
-▢ • ${prefix}bloquear-palavra | add | palavra
-▢ • ${prefix}lista-negra | add | @user
+▢ • ${prefix}bloquear-palavra
+▢ • ${prefix}lista-negra
 ▢ • ${prefix}only-admin (1/0)
 ▢
 ╰━━─「⚙️」─━━
@@ -86,10 +86,12 @@ export function menuMessage(groupJid) {
 ▢ • ${prefix}lutar @user
 ▢ • ${prefix}matar @user
 ▢ • ${prefix}socar @user
-▢ • ${prefix}jogodavelha | @jogador
-▢ • ${prefix}jogodavelha jogar | 1
+▢ • ${prefix}velha — Inicia jogo da velha
+▢ • ${prefix}velha entrar — Entra no jogo
+▢ • ${prefix}velha jogar | 1 — Joga
 ▢ • ${prefix}forca iniciar
-▢ • ${prefix}forca letra | a
+▢ • ${prefix}forca l | a
+▢ • ${prefix}forca chutar | palavra
 ▢ • ${prefix}animal
 ▢ • ${prefix}animal chutar | nome
 ▢ • ${prefix}pensao | @user | motivo
