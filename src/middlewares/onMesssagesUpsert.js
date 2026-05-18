@@ -6,7 +6,6 @@
  */
 import { DEVELOPER_MODE } from "../config.js";
 import { badMacHandler } from "../utils/badMacHandler.js";
-import { protegerRaquel } from "./protegerRaquel.js";
 import { autoRaquelHandler } from "./autoRaquel.js";
 import { checkIfMemberIsMuted } from "../utils/database.js";
 import { dynamicCommand } from "../utils/dynamicCommand.js";
@@ -25,21 +24,14 @@ import { blockWordHandler } from "./blockWordHandler.js";
 import { customMiddleware } from "./customMiddleware.js";
 import { messageHandler } from "./messageHandler.js";
 import { onGroupParticipantsUpdate } from "./onGroupParticipantsUpdate.js";
+import { protegerRaquel } from "./protegerRaquel.js";
 
 export async function onMessagesUpsert({ socket, messages, startProcess }) {
-  if (!messages.length) {
-    return;
-  }
+  if (!messages.length) return;
 
   for (const webMessage of messages) {
     if (DEVELOPER_MODE) {
-      infoLog(
-        `\n\n⪨========== [ MENSAGEM RECEBIDA ] ==========⪩ \n\n${JSON.stringify(
-          messages,
-          null,
-          2
-        )}`
-      );
+      infoLog(`\n\n⪨========== [ MENSAGEM RECEBIDA ] ==========⪩ \n\n${JSON.stringify(messages, null, 2)}`);
     }
 
     try {
@@ -49,40 +41,31 @@ export async function onMessagesUpsert({ socket, messages, startProcess }) {
         messageHandler(socket, webMessage);
       }
 
-      if (isAtLeastMinutesInPast(timestamp)) {
-        continue;
-      }
+      if (isAtLeastMinutesInPast(timestamp)) continue;
 
       // ENTRADA/SAÍDA
       if (isAddOrLeave.includes(webMessage.messageStubType)) {
         let action = "";
-        if (webMessage.messageStubType === GROUP_PARTICIPANT_ADD) {
-          action = "add";
-        } else if (webMessage.messageStubType === GROUP_PARTICIPANT_LEAVE) {
-          action = "remove";
-        }
+        if (webMessage.messageStubType === GROUP_PARTICIPANT_ADD) action = "add";
+        else if (webMessage.messageStubType === GROUP_PARTICIPANT_LEAVE) action = "remove";
 
-        // LISTA NEGRA - remove se estiver bloqueado
         if (action === "add") {
           const userLid = webMessage.messageStubParameters[0];
           const remoteJid = webMessage.key.remoteJid;
           await blacklistHandler(socket, remoteJid, userLid, null);
         }
 
+        // 🛡️ PROTEGER RAQUEL
+        await protegerRaquel(socket, webMessage.key.remoteJid, null, action, webMessage.messageStubParameters[0]);
+
         await customMiddleware({
-          socket,
-          webMessage,
-          type: "participant",
-          action,
-          data: webMessage.messageStubParameters[0],
-          commonFunctions: null,
+          socket, webMessage, type: "participant", action,
+          data: webMessage.messageStubParameters[0], commonFunctions: null,
         });
 
         await onGroupParticipantsUpdate({
           data: webMessage.messageStubParameters[0],
-          remoteJid: webMessage.key.remoteJid,
-          socket,
-          action,
+          remoteJid: webMessage.key.remoteJid, socket, action,
         });
 
         return;
@@ -91,17 +74,10 @@ export async function onMessagesUpsert({ socket, messages, startProcess }) {
       const userLid = webMessage?.key?.participant?.replace(/:[0-9][0-9]|:[0-9]/g, "");
       const remoteJid = webMessage?.key?.remoteJid;
 
-      // MUTADO
       if (checkIfMemberIsMuted(remoteJid, userLid)) {
         try {
           const { id, participant } = webMessage.key;
-          const deleteKey = {
-            remoteJid,
-            fromMe: false,
-            id,
-            participant,
-          };
-          await socket.sendMessage(remoteJid, { delete: deleteKey });
+          await socket.sendMessage(remoteJid, { delete: { remoteJid, fromMe: false, id, participant } });
         } catch (error) {
           errorLog(`Erro ao deletar mensagem de membro silenciado: ${error.message}`);
         }
@@ -109,57 +85,40 @@ export async function onMessagesUpsert({ socket, messages, startProcess }) {
       }
 
       const commonFunctions = loadCommonFunctions({ socket, webMessage });
+      if (!commonFunctions) continue;
 
-      if (!commonFunctions) {
-        continue;
+      // AUTO-RESPOSTA RAQUEL
+      if (commonFunctions.fullMessage) {
+        await autoRaquelHandler(socket, remoteJid, webMessage, commonFunctions.fullMessage);
       }
 
-// AUTO-RESPOSTA RAQUEL
-if (commonFunctions.fullMessage) {
-  await autoRaquelHandler(socket, remoteJid, webMessage, commonFunctions.fullMessage);
-}
-      // 🔥 ANTI-FLOOD
+      // ANTI-FLOOD
       if (userLid && remoteJid) {
         const flooded = await antiFloodHandler(socket, remoteJid, userLid, webMessage);
         if (flooded) return;
       }
 
-      // 🔥 BLOQUEIO DE PALAVRAS
+      // BLOQUEIO DE PALAVRAS
       if (userLid && remoteJid && commonFunctions.fullMessage) {
         const wordBlocked = await blockWordHandler(socket, remoteJid, userLid, webMessage, commonFunctions.fullMessage);
         if (wordBlocked) return;
       }
 
-      // 🔥 ANTI-LINK COM AVISOS
+      // ANTI-LINK COM AVISOS
       if (userLid && remoteJid && commonFunctions.fullMessage) {
-        const linkBlocked = await antiLinkWarnHandler(
-          socket,
-          remoteJid,
-          userLid,
-          webMessage,
-          commonFunctions.fullMessage
-        );
+        const linkBlocked = await antiLinkWarnHandler(socket, remoteJid, userLid, webMessage, commonFunctions.fullMessage);
         if (linkBlocked) return;
       }
 
-      await customMiddleware({
-        socket,
-        webMessage,
-        type: "message",
-        commonFunctions,
-      });
-
+      await customMiddleware({ socket, webMessage, type: "message", commonFunctions });
       await dynamicCommand(commonFunctions, startProcess);
-    } catch (error) {
-      if (badMacHandler.handleError(error, "message-processing")) {
-        continue;
-      }
 
+    } catch (error) {
+      if (badMacHandler.handleError(error, "message-processing")) continue;
       if (badMacHandler.isSessionError(error)) {
         errorLog(`Erro de sessão ao processar mensagem: ${error.message}`);
         continue;
       }
-
       errorLog(`Erro ao processar mensagem: ${error.message} | Stack: ${error.stack}`);
       continue;
     }
