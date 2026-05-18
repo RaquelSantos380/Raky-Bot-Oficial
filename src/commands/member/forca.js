@@ -1,3 +1,4 @@
+```javascript
 import fs from "fs";
 import path from "path";
 
@@ -255,3 +256,4 @@ function formatarForca(jogo) {
   const palavraEscondida = jogo.palavra.split("").map(l => jogo.letrasUsadas.includes(l) ? l : "_").join(" ");
   return `${boneco[Math.min(jogo.erros, 6)]}\n\n📝 ${palavraEscondida}\n\n💡 ${jogo.dica}\n🔤 Letras: ${jogo.letrasUsadas.join(" ") || "Nenhuma"}\n❌ Erros: ${jogo.erros}/${jogo.maxErros} | 💡 Dicas: ${jogo.dicasUsadas}/3`;
 }
+```
