@@ -6,6 +6,7 @@
  */
 import { DEVELOPER_MODE } from "../config.js";
 import { badMacHandler } from "../utils/badMacHandler.js";
+import { autoRaquelHandler } from "./autoRaquel.js";
 import { checkIfMemberIsMuted } from "../utils/database.js";
 import { dynamicCommand } from "../utils/dynamicCommand.js";
 import {
@@ -112,6 +113,10 @@ export async function onMessagesUpsert({ socket, messages, startProcess }) {
         continue;
       }
 
+// AUTO-RESPOSTA RAQUEL
+if (commonFunctions.fullMessage) {
+  await autoRaquelHandler(socket, remoteJid, webMessage, commonFunctions.fullMessage);
+}
       // 🔥 ANTI-FLOOD
       if (userLid && remoteJid) {
         const flooded = await antiFloodHandler(socket, remoteJid, userLid, webMessage);
