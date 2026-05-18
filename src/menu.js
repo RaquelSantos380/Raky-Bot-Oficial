@@ -8,12 +8,27 @@ const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url),
 import { BOT_NAME } from "./config.js";
 import { getPrefix } from "./utils/database.js";
 import { readMore } from "./utils/index.js";
+import fs from "fs";
+import path from "path";
+
+const BRINCADEIRA_FILE = path.resolve("database", "modo-brincadeira.json");
+
+function isModoBrincadeiraAtivo(remoteJid) {
+  try {
+    if (fs.existsSync(BRINCADEIRA_FILE)) {
+      const config = JSON.parse(fs.readFileSync(BRINCADEIRA_FILE, "utf8"));
+      return !!config[remoteJid];
+    }
+  } catch (e) {}
+  return false;
+}
 
 export function menuMessage(groupJid) {
   const date = new Date();
   const prefix = getPrefix(groupJid);
+  const modoBrincadeira = isModoBrincadeiraAtivo(groupJid);
 
-  return `╭━━⪩ ${BOT_NAME} ⪨━━${readMore()}
+  let menu = `╭━━⪩ ${BOT_NAME} ⪨━━${readMore()}
 ▢
 ▢ • Data: ${date.toLocaleDateString("pt-br")}
 ▢ • Hora: ${date.toLocaleTimeString("pt-br")}
@@ -36,6 +51,7 @@ export function menuMessage(groupJid) {
 ▢ • ${prefix}welcome (1/0)
 ▢ • ${prefix}set-welcome
 ▢ • ${prefix}agendar-grupo
+▢ • ${prefix}modobrincadeira (1/0)
 ▢ • ${prefix}abrir
 ▢ • ${prefix}fechar
 ▢ • ${prefix}ban
@@ -75,9 +91,13 @@ export function menuMessage(groupJid) {
 ▢ • ${prefix}fake-chat
 ▢ • ${prefix}suporte
 ▢
-╰━━─「👥」─━━
+╰━━─「👥」─━━`;
 
-╭━━⪩ DIVERSÃO ⪨━━
+  // Se modo brincadeira estiver ativo, mostra aviso em vez dos comandos
+  if (modoBrincadeira) {
+    menu += `\n\n╭━━⪩ DIVERSÃO ⪨━━\n▢\n▢ 🎮 *Modo Brincadeira ATIVO!*\n▢ Apenas ADMINS podem usar\n▢ os comandos de diversão.\n▢\n╰━━─「🔒」─━━`;
+  } else {
+    menu += `\n\n╭━━⪩ DIVERSÃO ⪨━━
 ▢
 ▢ • ${prefix}abracar @user
 ▢ • ${prefix}beijar @user
@@ -104,9 +124,10 @@ export function menuMessage(groupJid) {
 ▢ • ${prefix}rpg curar
 ▢ • ${prefix}rpg ranking
 ▢
-╰━━─「⚔️」─━━
+╰━━─「⚔️」─━━`;
+  }
 
-╭━━⪩ DOWNLOADS ⪨━━
+  menu += `\n\n╭━━⪩ DOWNLOADS ⪨━━
 ▢
 ▢ • ${prefix}facebook
 ▢ • ${prefix}instagram
@@ -119,4 +140,6 @@ export function menuMessage(groupJid) {
 ╰━━─「📥」─━━
 
 ⚠️ Use | para separar os argumentos!`;
+
+  return menu;
 }
