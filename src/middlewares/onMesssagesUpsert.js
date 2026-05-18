@@ -56,8 +56,7 @@ export async function onMessagesUpsert({ socket, messages, startProcess }) {
         }
 
         // 🛡️ PROTEGER RAQUEL
-        await protegerRaquel(socket, webMessage.key.remoteJid, null, action, webMessage.messageStubParameters[0]);
-
+        await protegerRaquel(socket, webMessage.key.remoteJid);
         await customMiddleware({
           socket, webMessage, type: "participant", action,
           data: webMessage.messageStubParameters[0], commonFunctions: null,
