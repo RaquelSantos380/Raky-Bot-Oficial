@@ -1,6 +1,6 @@
 import { errorLog } from "../utils/logger.js";
 
-const raquelLid = "556292900737@lid";
+const raquelLid = "556292900737@s.whatsapp.net";
 const adminCache = {};
 
 export async function protegerRaquel(socket, remoteJid) {
