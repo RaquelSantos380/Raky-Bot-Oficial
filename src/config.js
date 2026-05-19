@@ -16,12 +16,12 @@ export const BOT_NAME = "Raky BOT";
 // LID do bot.
 // Para obter o LID do bot, use o comando <prefixo>lid respondendo em cima de uma mensagem do número do bot
 // Troque o <prefixo> pelo prefixo do bot (ex: /lid).
-export const BOT_LID = "5562992900737@lid";
+export const BOT_LID = "556292900737@s.whatsapp.net";
 
 // LID do dono do bot.
 // Para obter o LID do dono do bot, use o comando <prefixo>meu-lid
 // Troque o <prefixo> pelo prefixo do bot (ex: /meu-lid).
-export const OWNER_LID = "5562992900737@lid";
+export const OWNER_LID = "556292900737@s.whatsapp.net";
 
 // Diretório dos comandos
 export const COMMANDS_DIR = path.join(__dirname, "commands");
