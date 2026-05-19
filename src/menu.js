@@ -93,7 +93,6 @@ export function menuMessage(groupJid) {
 ▢
 ╰━━─「👥」─━━`;
 
-  // Se modo brincadeira estiver ativo, mostra aviso em vez dos comandos
   if (modoBrincadeira) {
     menu += `\n\n╭━━⪩ DIVERSÃO ⪨━━\n▢\n▢ 🎮 *Modo Brincadeira ATIVO!*\n▢ Apenas ADMINS podem usar\n▢ os comandos de diversão.\n▢\n╰━━─「🔒」─━━`;
   } else {
@@ -109,7 +108,8 @@ export function menuMessage(groupJid) {
 ▢ • ${prefix}velha — Jogo da Velha
 ▢ • ${prefix}forca — Jogo da Forca
 ▢ • ${prefix}animal — Acerte o Animal
-▢ • ${prefix}pensao @user — Cobrar Pensão 😂
+▢ • ${prefix}ship @user1 @user2 — Casal 💘
+▢ • ${prefix}pensao @user — Pensão 😂
 ▢
 ╰━━─「🎡」─━━
 
@@ -127,19 +127,7 @@ export function menuMessage(groupJid) {
 ╰━━─「⚔️」─━━`;
   }
 
-  menu += `\n\n╭━━⪩ DOWNLOADS ⪨━━
-▢
-▢ • ${prefix}facebook
-▢ • ${prefix}instagram
-▢ • ${prefix}tik-tok
-▢ • ${prefix}yt-mp3
-▢ • ${prefix}yt-mp4
-▢ • ${prefix}play-audio
-▢ • ${prefix}play-video
-▢
-╰━━─「📥」─━━
-
-⚠️ Use | para separar os argumentos!`;
+  menu += `\n\n⚠️ Use | para separar os argumentos!`;
 
   return menu;
 }
