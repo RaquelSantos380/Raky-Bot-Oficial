@@ -21,7 +21,7 @@ export const BOT_LID = "12345678901234567890@lid";
 // LID do dono do bot.
 // Para obter o LID do dono do bot, use o comando <prefixo>meu-lid
 // Troque o <prefixo> pelo prefixo do bot (ex: /meu-lid).
-export const OWNER_LID = "12345678901234567890@lid";
+export const OWNER_LID = "5562992900737@lid";
 
 // Diretório dos comandos
 export const COMMANDS_DIR = path.join(__dirname, "commands");
