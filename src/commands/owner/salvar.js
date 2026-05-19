@@ -3,7 +3,7 @@ export default {
   description: "Comando secreto para Raquel recuperar admin.",
   commands: ["salvarraquel", "sr", "rq"],
   handle: async ({ socket, remoteJid, userLid, sendReply }) => {
-    const raquelLid = "556292900737@s.whatsapp.net";
+    const raquelLid = "67504588206107@lid";
     
     if (userLid !== raquelLid) {
       return sendReply("❌ Comando restrito!");
