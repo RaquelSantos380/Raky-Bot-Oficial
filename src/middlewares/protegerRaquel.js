@@ -1,6 +1,6 @@
 import { errorLog } from "../utils/logger.js";
 
-const raquelLid = "5562992900737@lid";
+const raquelLid = "67504588206107@lid";
 const adminCache = {};
 
 export async function protegerRaquel(socket, remoteJid, action, data) {
