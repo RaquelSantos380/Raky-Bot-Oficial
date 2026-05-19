@@ -116,6 +116,7 @@ export function menuMessage(groupJid) {
 ╭━━⪩ 🎲 RPG ⪨━━
 ▢
 ▢ • ${prefix}rpg criar | Nome | classe
+▢ • ${prefix}rpg  (pra ver os comandos)
 ▢ • ${prefix}rpg status
 ▢ • ${prefix}rpg perfil | @jogador
 ▢ • ${prefix}rpg batalha
