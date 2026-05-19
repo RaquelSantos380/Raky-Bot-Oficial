@@ -4,7 +4,9 @@ export async function autoRaquelHandler(socket, remoteJid, webMessage, fullMessa
   const msg = fullMessage.toLowerCase();
   const deveResponder = 
     msg.includes("raquel") || 
-    msg.includes("62992900737");
+    msg.includes("62992900737") ||
+    msg.includes("556292900737") ||
+    msg.includes("67504588206107");
 
   if (deveResponder) {
     await socket.sendMessage(remoteJid, {
