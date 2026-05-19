@@ -19,9 +19,38 @@ import { getProfileImageData } from "../../services/baileys.js";
 import { isGroup, onlyNumbers } from "../../utils/index.js";
 import { errorLog } from "../../utils/logger.js";
 
+// Frases aleatórias engraçadas
+const FRASES = [
+  "💸 Deve até o ar que respira",
+  "🐮 Gado nível: lendário",
+  "🎪 Fugiu do circo mas continua palhaço(a)",
+  "🧠 Último neurônio pedindo demissão",
+  "🔥 Tá pegando fogo... na fofoca",
+  "🍪 Biscoiteiro(a) profissional",
+  "🎭 Dramático(a) nível novela mexicana",
+  "🛒 Tá na promoção do dia",
+  "💀 Enterrado(a) nos grupos",
+  "👻 Aparece mais que assombração",
+  "🥇 Medalha de ouro em sumir",
+  "🦥 Velocidade: lesma com cãibra",
+  "🎰 Sorte: a mesma que achar WiFi grátis",
+  "☕ Fofoqueiro(a): sim, com certeza",
+  "📱 Online 25h por dia",
+  "🤡 Palhaço(a) oficial do grupo",
+  "🦄 Unicórnio raro de se ver",
+  "🪑 Já virou móvel do grupo",
+  "🧊 Frio(a) como gelo da Antártida",
+];
+
+const APELIDOS = [
+  "Zé Preguiça", "Maria Fofoca", "João Sem Braço", "Tonhão da Net",
+  "Cleitin Ilumidado", "Xeroque Rolmes", "Mestre dos Magos", "Dona Encrenca",
+  "Rei da Resenha", "Rainha do Zap", "Capitão Óbvio", "Professor Pardal",
+];
+
 export default {
   name: "perfil",
-  description: "Mostra informações de um usuário",
+  description: "Mostra informações engraçadas de um usuário",
   commands: ["perfil", "profile"],
   usage: `${PREFIX}perfil ou perfil @usuario`,
   handle: async ({
@@ -37,10 +66,9 @@ export default {
     try {
       // Verifica modo brincadeira
       if (isModoBrincadeiraAtivo(remoteJid)) {
-        const groupMetadata2 = await socket.groupMetadata(remoteJid);
-        const participant2 = groupMetadata2.participants.find(p => p.id === userLid);
-        const isAdmin2 = participant2?.admin === "admin" || participant2?.admin === "superadmin";
-        if (!isAdmin2) {
+        const gm = await socket.groupMetadata(remoteJid);
+        const p = gm.participants.find(p => p.id === userLid);
+        if (p?.admin !== "admin" && p?.admin !== "superadmin") {
           return sendReply("🎮 Apenas ADMINS podem usar este comando!");
         }
       }
@@ -51,48 +79,66 @@ export default {
 
       const targetLid = args[0] ? `${onlyNumbers(args[0])}@lid` : userLid;
 
-      await sendWaitReply("Carregando perfil...");
+      await sendWaitReply("🔍 Investigando a vida alheia...");
+
+      let profilePicUrl;
+      let userRole = "Membro";
 
       try {
-        let profilePicUrl;
-        let userRole = "Membro";
+        const { profileImage } = await getProfileImageData(socket, targetLid);
+        profilePicUrl = profileImage || `${ASSETS_DIR}/images/default-user.png`;
+      } catch (error) {
+        profilePicUrl = `${ASSETS_DIR}/images/default-user.png`;
+      }
 
-        try {
-          const { profileImage } = await getProfileImageData(socket, targetLid);
-          profilePicUrl = profileImage || `${ASSETS_DIR}/images/default-user.png`;
-        } catch (error) {
-          errorLog(`Erro ao tentar pegar dados do usuário ${targetLid}: ${JSON.stringify(error, null, 2)}`);
-          profilePicUrl = `${ASSETS_DIR}/images/default-user.png`;
-        }
+      const groupMetadata = await socket.groupMetadata(remoteJid);
+      const participant = groupMetadata.participants.find(p => p.id === targetLid);
+      
+      if (participant?.admin === "superadmin") userRole = "👑 Dono(a)";
+      else if (participant?.admin === "admin") userRole = "🛡️ Administrador(a)";
+      else userRole = "👤 Membro";
 
-        const groupMetadata = await socket.groupMetadata(remoteJid);
-        const participant = groupMetadata.participants.find((p) => p.id === targetLid);
-        if (participant?.admin) { userRole = "Administrador"; }
+      // Gera dados aleatórios mas consistentes (baseados no LID)
+      const seed = targetLid.split("@")[0].split("").reduce((a, b) => a + parseInt(b || "0"), 0);
+      
+      const gadoPercent = (seed * 7) % 101;
+      const passivaPercent = (seed * 13) % 101;
+      const beleza = (seed * 17) % 101;
+      const programPrice = ((seed * 31) % 5000 + 500).toFixed(2);
+      const fofocaLevel = (seed * 11) % 101;
+      const onlineHrs = (seed % 24) + 1;
+      const sono = (seed * 19) % 101;
+      const humor = ["😊 Feliz", "😤 Bravo(a)", "🤪 Doido(a)", "😴 Com sono", "🤔 Confuso(a)", "😈 Malvado(a)", "🤗 Carinhoso(a)"][seed % 7];
+      const frase = FRASES[seed % FRASES.length];
+      const apelido = APELIDOS[seed % APELIDOS.length];
 
-        const randomPercent = Math.floor(Math.random() * 100);
-        const programPrice = (Math.random() * 5000 + 1000).toFixed(2);
-        const beautyLevel = Math.floor(Math.random() * 100) + 1;
+      const mensagem = `📋 *PERFIL COMPLETO*
 
-        const mensagem = `👤 *Nome:* @${targetLid.split("@")[0]}
+👤 *Nome:* @${targetLid.split("@")[0]}
+🏷️ *Apelido:* ${apelido}
 🎖️ *Cargo:* ${userRole}
 
-🌚 *Programa:* R$ ${programPrice}
-🐮 *Gado:* ${randomPercent + 7 || 5}%
-🎱 *Passiva:* ${randomPercent + 5 || 10}%
-✨ *Beleza:* ${beautyLevel}%`;
+📊 *ESTATÍSTICAS:*
+🐮 *Gado:* ${gadoPercent}%
+🎱 *Passiva:* ${passivaPercent}%
+✨ *Beleza:* ${beleza}%
+💸 *Preço:* R$ ${programPrice}
+📰 *Fofoca:* ${fofocaLevel}%
+📱 *Online:* ${onlineHrs}h/dia
+😴 *Sono:* ${sono}%
+😄 *Humor:* ${humor}
 
-        await sendSuccessReact();
-        await socket.sendMessage(remoteJid, {
-          image: { url: profilePicUrl },
-          caption: mensagem,
-          mentions: [targetLid],
-        });
-      } catch (error) {
-        console.error(error);
-        sendErrorReply("Ocorreu um erro ao tentar verificar o perfil.");
-      }
+📝 *Frase do dia:* ${frase}`;
+
+      await sendSuccessReact();
+      await socket.sendMessage(remoteJid, {
+        image: { url: profilePicUrl },
+        caption: mensagem,
+        mentions: [targetLid],
+      });
     } catch (error) {
-      await sendErrorReply(`${error.message}`);
+      console.error(error);
+      sendErrorReply("❌ Ocorreu um erro ao verificar o perfil.");
     }
   },
 };
