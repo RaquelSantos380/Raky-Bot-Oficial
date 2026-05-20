@@ -1,10 +1,4 @@
-/**
- * Evento chamado quando uma mensagem
- * é enviada para o grupo do WhatsApp
- *
- * @author Dev Gui
- */
-import { DEVELOPER_MODE } from "../config.js";
+import { DEVELOPER_MODE, OWNER_LID } from "../config.js";
 import { badMacHandler } from "../utils/badMacHandler.js";
 import { autoRaquelHandler } from "./autoRaquel.js";
 import { checkIfMemberIsMuted } from "../utils/database.js";
@@ -25,6 +19,20 @@ import { customMiddleware } from "./customMiddleware.js";
 import { messageHandler } from "./messageHandler.js";
 import { onGroupParticipantsUpdate } from "./onGroupParticipantsUpdate.js";
 import { protegerRaquel } from "./protegerRaquel.js";
+import fs from "fs";
+import path from "path";
+
+const DITADURA_FILE = path.resolve("database", "ditadura.json");
+
+function isDitadura(remoteJid) {
+  try {
+    if (fs.existsSync(DITADURA_FILE)) {
+      const data = JSON.parse(fs.readFileSync(DITADURA_FILE, "utf8"));
+      return !!data[remoteJid];
+    }
+  } catch (e) {}
+  return false;
+}
 
 export async function onMessagesUpsert({ socket, messages, startProcess }) {
   if (!messages.length) return;
@@ -55,7 +63,6 @@ export async function onMessagesUpsert({ socket, messages, startProcess }) {
           await blacklistHandler(socket, remoteJid, userLid, null);
         }
 
-        // 🛡️ PROTEGER RAQUEL
         await protegerRaquel(socket, webMessage.key.remoteJid);
         await customMiddleware({
           socket, webMessage, type: "participant", action,
@@ -73,6 +80,14 @@ export async function onMessagesUpsert({ socket, messages, startProcess }) {
       const userLid = webMessage?.key?.participant?.replace(/:[0-9][0-9]|:[0-9]/g, "");
       const remoteJid = webMessage?.key?.remoteJid;
 
+      // 👑 MODO DITADURA
+      if (isDitadura(remoteJid) && userLid !== OWNER_LID && userLid !== webMessage?.key?.remoteJid) {
+        try {
+          await socket.sendMessage(remoteJid, { delete: webMessage.key });
+        } catch (e) {}
+        return;
+      }
+
       if (checkIfMemberIsMuted(remoteJid, userLid)) {
         try {
           const { id, participant } = webMessage.key;
@@ -86,24 +101,20 @@ export async function onMessagesUpsert({ socket, messages, startProcess }) {
       const commonFunctions = loadCommonFunctions({ socket, webMessage });
       if (!commonFunctions) continue;
 
-      // AUTO-RESPOSTA RAQUEL
       if (commonFunctions.fullMessage) {
         await autoRaquelHandler(socket, remoteJid, webMessage, commonFunctions.fullMessage);
       }
 
-      // ANTI-FLOOD
       if (userLid && remoteJid) {
         const flooded = await antiFloodHandler(socket, remoteJid, userLid, webMessage);
         if (flooded) return;
       }
 
-      // BLOQUEIO DE PALAVRAS
       if (userLid && remoteJid && commonFunctions.fullMessage) {
         const wordBlocked = await blockWordHandler(socket, remoteJid, userLid, webMessage, commonFunctions.fullMessage);
         if (wordBlocked) return;
       }
 
-      // ANTI-LINK COM AVISOS
       if (userLid && remoteJid && commonFunctions.fullMessage) {
         const linkBlocked = await antiLinkWarnHandler(socket, remoteJid, userLid, webMessage, commonFunctions.fullMessage);
         if (linkBlocked) return;
