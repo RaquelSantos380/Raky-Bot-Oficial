@@ -17,9 +17,7 @@ import { ASSETS_DIR, PREFIX } from "../../config.js";
 import { InvalidParameterError } from "../../errors/index.js";
 import { getProfileImageData } from "../../services/baileys.js";
 import { isGroup, onlyNumbers } from "../../utils/index.js";
-import { errorLog } from "../../utils/logger.js";
 
-// Frases aleatórias engraçadas
 const FRASES = [
   "💸 Deve até o ar que respira",
   "🐮 Gado nível: lendário",
@@ -34,18 +32,58 @@ const FRASES = [
   "🥇 Medalha de ouro em sumir",
   "🦥 Velocidade: lesma com cãibra",
   "🎰 Sorte: a mesma que achar WiFi grátis",
-  "☕ Fofoqueiro(a): sim, com certeza",
   "📱 Online 25h por dia",
   "🤡 Palhaço(a) oficial do grupo",
   "🦄 Unicórnio raro de se ver",
   "🪑 Já virou móvel do grupo",
   "🧊 Frio(a) como gelo da Antártida",
+  "🦖 Jurassic Park de tanta idade",
+  "🎤 Cantor(a) de chuveiro premiado",
+  "🧹 Vassoura elétrica: voa nas fofocas",
+  "🛸 Abduzido(a) pelos ETs do zap",
+  "🎯 Alvo preferido dos memes",
+  "🧃 Suco de maracujá zero efeito",
+  "🚀 Foguete: só sobe na zoeira",
+  "🎳 Strike na arte de sumir",
+  "🪞 Espelho, espelho meu... sai fora",
+  "🦟 Mosquito: aparece do nada e some",
+  "🎪 Dono(a) do próprio circo",
+  "📡 Antena parabólica de fofoca",
 ];
 
 const APELIDOS = [
   "Zé Preguiça", "Maria Fofoca", "João Sem Braço", "Tonhão da Net",
   "Cleitin Ilumidado", "Xeroque Rolmes", "Mestre dos Magos", "Dona Encrenca",
   "Rei da Resenha", "Rainha do Zap", "Capitão Óbvio", "Professor Pardal",
+  "Véi da Lancha", "Jão do Grau", "Creusa do Zap", "Marcinha Encrenca",
+  "Tio do Pavê", "Primo Rico", "Zé Droguinha", "Mano Brown Fake",
+  "Carlinhos Turbo", "Tieta do Grupo", "Bebê Rena", "Pastor do Zap",
+  "Doutora Fofoca", "Senhor Incrível", "Barbie Fake", "Ken Encrencado",
+  "Patricinha do Pó", "Chico Bento", "Mônica Dentuça", "Cebolinha Ceboso",
+];
+
+const SIGNOS = [
+  "♈ Áries", "♉ Touro", "♊ Gêmeos", "♋ Câncer", "♌ Leão", "♍ Virgem",
+  "♎ Libra", "♏ Escorpião", "♐ Sagitário", "♑ Capricórnio", "♒ Aquário", "♓ Peixes",
+];
+
+const HABILIDADES = [
+  "Sumir por 3 dias e voltar como se nada",
+  "Responder depois de 2 semanas",
+  "Mandar áudio de 5 minutos",
+  "Visualizar e não responder",
+  "Fazer drama nível novela",
+  "Comer e mandar foto da comida",
+  "Dormir em call",
+  "Flodar figurinha de bom dia",
+  "Perguntar e sair correndo",
+  "Cantar no áudio desafinado",
+  "Mandar corrente do zap",
+  "Criar fake news do grupo",
+  "Ser cancelado toda semana",
+  "Puxar assunto aleatório às 3h",
+  "Nunca ler as regras",
+  "Sempre pedir admin",
 ];
 
 export default {
@@ -64,7 +102,6 @@ export default {
     sendReply,
   }) => {
     try {
-      // Verifica modo brincadeira
       if (isModoBrincadeiraAtivo(remoteJid)) {
         const gm = await socket.groupMetadata(remoteJid);
         const p = gm.participants.find(p => p.id === userLid);
@@ -81,54 +118,62 @@ export default {
 
       await sendWaitReply("🔍 Investigando a vida alheia...");
 
-      let profilePicUrl;
-      let userRole = "Membro";
+      let profilePicUrl = `${ASSETS_DIR}/images/default-user.png`;
+      let userRole = "👤 Membro";
 
       try {
         const { profileImage } = await getProfileImageData(socket, targetLid);
         profilePicUrl = profileImage || `${ASSETS_DIR}/images/default-user.png`;
-      } catch (error) {
-        profilePicUrl = `${ASSETS_DIR}/images/default-user.png`;
-      }
+      } catch (error) {}
 
       const groupMetadata = await socket.groupMetadata(remoteJid);
       const participant = groupMetadata.participants.find(p => p.id === targetLid);
       
       if (participant?.admin === "superadmin") userRole = "👑 Dono(a)";
       else if (participant?.admin === "admin") userRole = "🛡️ Administrador(a)";
-      else userRole = "👤 Membro";
 
-      // Gera dados aleatórios mas consistentes (baseados no LID)
       const seed = targetLid.split("@")[0].split("").reduce((a, b) => a + parseInt(b || "0"), 0);
       
-      const gadoPercent = (seed * 7) % 101;
-      const passivaPercent = (seed * 13) % 101;
-      const beleza = (seed * 17) % 101;
-      const programPrice = ((seed * 31) % 5000 + 500).toFixed(2);
-      const fofocaLevel = (seed * 11) % 101;
-      const onlineHrs = (seed % 24) + 1;
-      const sono = (seed * 19) % 101;
-      const humor = ["😊 Feliz", "😤 Bravo(a)", "🤪 Doido(a)", "😴 Com sono", "🤔 Confuso(a)", "😈 Malvado(a)", "🤗 Carinhoso(a)"][seed % 7];
-      const frase = FRASES[seed % FRASES.length];
       const apelido = APELIDOS[seed % APELIDOS.length];
+      const signo = SIGNOS[seed % SIGNOS.length];
+      const habilidade = HABILIDADES[seed % HABILIDADES.length];
+      const frase = FRASES[seed % FRASES.length];
+      
+      // Stats engraçadas
+      const beleza = (seed * 17) % 101;
+      const fofoca = (seed * 11) % 101;
+      const gado = (seed * 7) % 101;
+      const drama = (seed * 13) % 101;
+      const vacilao = (seed * 23) % 101;
+      const figurinha = (seed * 29) % 101;
+      const sono = (seed * 19) % 101;
+      const humor = ["😊 Feliz", "😤 Bravo(a)", "🤪 Doido(a)", "😴 Com sono", "🤔 Confuso(a)", "😈 Malvado(a)", "🤗 Carinhoso(a)", "😭 Chorando", "🥳 Festa"][seed % 9];
+
+      const barra = (pct) => {
+        const cheio = Math.floor(pct / 10);
+        return "▓".repeat(cheio) + "░".repeat(10 - cheio);
+      };
 
       const mensagem = `📋 *PERFIL COMPLETO*
 
 👤 *Nome:* @${targetLid.split("@")[0]}
-🏷️ *Apelido:* ${apelido}
+🏷️ *Vulgo:* ${apelido}
 🎖️ *Cargo:* ${userRole}
+🔮 *Signo:* ${signo}
 
 📊 *ESTATÍSTICAS:*
-🐮 *Gado:* ${gadoPercent}%
-🎱 *Passiva:* ${passivaPercent}%
-✨ *Beleza:* ${beleza}%
-💸 *Preço:* R$ ${programPrice}
-📰 *Fofoca:* ${fofocaLevel}%
-📱 *Online:* ${onlineHrs}h/dia
-😴 *Sono:* ${sono}%
-😄 *Humor:* ${humor}
+✨ Beleza: ${barra(beleza)} ${beleza}%
+📰 Fofoca: ${barra(fofoca)} ${fofoca}%
+🐮 Gado: ${barra(gado)} ${gado}%
+🎭 Drama: ${barra(drama)} ${drama}%
+🤡 Vacilão: ${barra(vacilao)} ${vacilao}%
+🫶 Figurinha: ${barra(figurinha)} ${figurinha}%
+😴 Sono: ${barra(sono)} ${sono}%
+😄 Humor: ${humor}
 
-📝 *Frase do dia:* ${frase}`;
+🎯 *Habilidade especial:* ${habilidade}
+
+📝 ${frase}`;
 
       await sendSuccessReact();
       await socket.sendMessage(remoteJid, {
