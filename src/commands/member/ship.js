@@ -16,8 +16,12 @@ function isModoBrincadeiraAtivo(remoteJid) {
 }
 
 function limparNumero(texto) {
-  // Remove TUDO que não for número
   return texto?.replace(/[^0-9]/g, "") || "";
+}
+
+function limparNome(texto) {
+  // Remove caracteres invisíveis e espaços extras
+  return texto?.replace(/[⁨⁩]/g, "").trim() || "";
 }
 
 const EMOJIS_AMOR = ["💘", "💑", "💕", "💖", "💗", "💓", "💞", "💝", "🩷", "❤️‍🔥", "🥰", "😍", "💋"];
@@ -72,20 +76,22 @@ export default {
         }
       }
 
-      // Junta tudo e separa por |
-      const tudo = args.join(" ");
-      const partes = tudo.split("|").map(s => s.trim()).filter(Boolean);
+      // Extrai TODOS os números dos argumentos (ignora | e caracteres invisíveis)
+      const todosNumeros = [];
+      for (const arg of args) {
+        // Pula o separador |
+        if (arg === "|") continue;
+        const num = limparNumero(arg);
+        if (num.length >= 5) todosNumeros.push(num);
+      }
 
-      let num1, num2;
+      let num1 = todosNumeros[0];
+      let num2 = todosNumeros[1];
 
-      if (partes.length >= 2) {
-        num1 = limparNumero(partes[0]);
-        num2 = limparNumero(partes[1]);
-      } else {
-        // Pega todos os args e extrai números
-        const todosNumeros = args.map(a => limparNumero(a)).filter(n => n.length > 5);
-        num1 = todosNumeros[0];
-        num2 = todosNumeros[1];
+      // Se só tem 1, shippa com quem digitou
+      if (num1 && !num2) {
+        num2 = num1;
+        num1 = limparNumero(userLid);
       }
 
       if (!num1 || !num2) {
