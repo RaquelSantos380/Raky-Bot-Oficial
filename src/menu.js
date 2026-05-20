@@ -71,6 +71,7 @@ export function menuMessage(groupJid) {
 ▢ • ${prefix}bloquear-palavra
 ▢ • ${prefix}lista-negra
 ▢ • ${prefix}only-admin (1/0)
+▢ • ${prefix}adms — Chamar staff
 ▢
 ╰━━─「⚙️」─━━
 
@@ -109,14 +110,15 @@ export function menuMessage(groupJid) {
 ▢ • ${prefix}forca — Jogo da Forca
 ▢ • ${prefix}animal — Acerte o Animal
 ▢ • ${prefix}ship @user1 @user2 — Casal 💘
+▢ • ${prefix}defeitos @user — Defeitos 😂
 ▢ • ${prefix}pensao @user — Pensão 😂
+▢ • ${prefix}previsao @user — Futuro 🔮
 ▢
 ╰━━─「🎡」─━━
 
 ╭━━⪩ 🎲 RPG ⪨━━
 ▢
 ▢ • ${prefix}rpg criar | Nome | classe
-▢ • ${prefix}rpg  (pra ver os comandos)
 ▢ • ${prefix}rpg status
 ▢ • ${prefix}rpg perfil | @jogador
 ▢ • ${prefix}rpg batalha
