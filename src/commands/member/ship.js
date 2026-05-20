@@ -73,43 +73,38 @@ export default {
       const partes = tudo.split("|").map(s => s.trim()).filter(Boolean);
 
       if (partes.length >= 2) {
-        lid1 = partes[0].replace(/[^0-9]/g, "");
-        lid2 = partes[1].replace(/[^0-9]/g, "");
-        nome1 = lid1;
-        nome2 = lid2;
+        lid1 = partes[0].replace(/[^0-9]/g, "") + "@lid";
+        lid2 = partes[1].replace(/[^0-9]/g, "") + "@lid";
+        nome1 = lid1.split("@")[0];
+        nome2 = lid2.split("@")[0];
       } else {
-        lid1 = args[0]?.replace(/[^0-9]/g, "");
-        lid2 = args[1]?.replace(/[^0-9]/g, "");
-        nome1 = lid1;
-        nome2 = lid2;
+        lid1 = (args[0]?.replace(/[^0-9]/g, "") || "") + "@lid";
+        lid2 = (args[1]?.replace(/[^0-9]/g, "") || "") + "@lid";
+        nome1 = lid1.split("@")[0];
+        nome2 = lid2.split("@")[0];
       }
 
-      if (!lid1 && !lid2) {
+      if (!lid1 || !lid2 || lid1 === "@lid" || lid2 === "@lid") {
         throw new InvalidParameterError("Marque duas pessoas!\nEx: `/ship @joao @maria`");
       }
 
       // Se só tem 1, shippa com quem digitou
-      if (lid1 && !lid2) {
+      if (lid1 !== "@lid" && lid2 === "@lid") {
         lid2 = lid1;
         nome2 = nome1;
-        lid1 = userLid.split("@")[0].replace(/[^0-9]/g, "");
-        nome1 = lid1;
-      }
-
-      if (!lid1 || !lid2) {
-        throw new InvalidParameterError("Marque duas pessoas!");
+        lid1 = userLid;
+        nome1 = userLid.split("@")[0];
       }
 
       // Busca nomes reais no grupo
       try {
         const gm = await socket.groupMetadata(remoteJid);
-        const p1 = gm.participants.find(p => p.id.includes(lid1));
-        const p2 = gm.participants.find(p => p.id.includes(lid2));
+        const p1 = gm.participants.find(p => p.id === lid1);
+        const p2 = gm.participants.find(p => p.id === lid2);
         if (p1) nome1 = p1.notify || p1.name || nome1;
         if (p2) nome2 = p2.notify || p2.name || nome2;
       } catch (e) {}
 
-      // Porcentagem baseada nos LIDs
       const seed = (lid1 + lid2).split("").reduce((a, b) => a + parseInt(b || "0"), 0);
       const porcentagem = seed % 101;
 
@@ -139,17 +134,19 @@ export default {
 
       const cheio = Math.floor(porcentagem / 10);
       const barra = "▓".repeat(cheio) + "░".repeat(10 - cheio);
+      const mentions = [lid1, lid2].filter(l => l !== "@lid");
 
       await sendSuccessReact();
-      return sendReply(
-        `💘 *SHIP CALCULATOR* 💘\n\n` +
-        `👤 *${nome1}*\n` +
-        `${emoji} ${porcentagem}%\n` +
-        `👤 *${nome2}*\n\n` +
-        `[${barra}] ${porcentagem}%\n\n` +
-        `📊 *Classificação:* ${classificacao}\n` +
-        `📝 ${frase}`
-      );
+      await socket.sendMessage(remoteJid, {
+        text: `💘 *SHIP CALCULATOR* 💘\n\n` +
+              `👤 *@${nome1}*\n` +
+              `${emoji} ${porcentagem}%\n` +
+              `👤 *@${nome2}*\n\n` +
+              `[${barra}] ${porcentagem}%\n\n` +
+              `📊 *Classificação:* ${classificacao}\n` +
+              `📝 ${frase}`,
+        mentions: mentions
+      });
 
     } catch (error) {
       await sendErrorReply(`${error.message}`);
