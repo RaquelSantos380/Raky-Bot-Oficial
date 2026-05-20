@@ -15,6 +15,11 @@ function isModoBrincadeiraAtivo(remoteJid) {
   return false;
 }
 
+function limparNumero(texto) {
+  // Remove TUDO que não for número
+  return texto?.replace(/[^0-9]/g, "") || "";
+}
+
 const EMOJIS_AMOR = ["💘", "💑", "💕", "💖", "💗", "💓", "💞", "💝", "🩷", "❤️‍🔥", "🥰", "😍", "💋"];
 const EMOJIS_RUIM = ["💔", "🥀", "👊", "💢", "😬", "🤡", "🗑️", "⚡", "💣", "🪦"];
 const FRASES_AMOR = [
@@ -67,45 +72,41 @@ export default {
         }
       }
 
-      let nome1, nome2, lid1, lid2;
-
+      // Junta tudo e separa por |
       const tudo = args.join(" ");
       const partes = tudo.split("|").map(s => s.trim()).filter(Boolean);
 
+      let num1, num2;
+
       if (partes.length >= 2) {
-        lid1 = partes[0].replace(/[^0-9]/g, "") + "@lid";
-        lid2 = partes[1].replace(/[^0-9]/g, "") + "@lid";
-        nome1 = lid1.split("@")[0];
-        nome2 = lid2.split("@")[0];
+        num1 = limparNumero(partes[0]);
+        num2 = limparNumero(partes[1]);
       } else {
-        lid1 = (args[0]?.replace(/[^0-9]/g, "") || "") + "@lid";
-        lid2 = (args[1]?.replace(/[^0-9]/g, "") || "") + "@lid";
-        nome1 = lid1.split("@")[0];
-        nome2 = lid2.split("@")[0];
+        // Pega todos os args e extrai números
+        const todosNumeros = args.map(a => limparNumero(a)).filter(n => n.length > 5);
+        num1 = todosNumeros[0];
+        num2 = todosNumeros[1];
       }
 
-      if (!lid1 || !lid2 || lid1 === "@lid" || lid2 === "@lid") {
+      if (!num1 || !num2) {
         throw new InvalidParameterError("Marque duas pessoas!\nEx: `/ship @joao @maria`");
       }
 
-      // Se só tem 1, shippa com quem digitou
-      if (lid1 !== "@lid" && lid2 === "@lid") {
-        lid2 = lid1;
-        nome2 = nome1;
-        lid1 = userLid;
-        nome1 = userLid.split("@")[0];
-      }
+      const lid1 = num1 + "@lid";
+      const lid2 = num2 + "@lid";
 
-      // Busca nomes reais no grupo
+      // Busca nomes reais
+      let nome1 = num1;
+      let nome2 = num2;
       try {
         const gm = await socket.groupMetadata(remoteJid);
-        const p1 = gm.participants.find(p => p.id === lid1);
-        const p2 = gm.participants.find(p => p.id === lid2);
-        if (p1) nome1 = p1.notify || p1.name || nome1;
-        if (p2) nome2 = p2.notify || p2.name || nome2;
+        const p1 = gm.participants.find(p => p.id.includes(num1));
+        const p2 = gm.participants.find(p => p.id.includes(num2));
+        if (p1) nome1 = p1.notify || p1.name || num1;
+        if (p2) nome2 = p2.notify || p2.name || num2;
       } catch (e) {}
 
-      const seed = (lid1 + lid2).split("").reduce((a, b) => a + parseInt(b || "0"), 0);
+      const seed = (num1 + num2).split("").reduce((a, b) => a + parseInt(b || "0"), 0);
       const porcentagem = seed % 101;
 
       let emoji, frase, classificacao;
@@ -134,7 +135,6 @@ export default {
 
       const cheio = Math.floor(porcentagem / 10);
       const barra = "▓".repeat(cheio) + "░".repeat(10 - cheio);
-      const mentions = [lid1, lid2].filter(l => l !== "@lid");
 
       await sendSuccessReact();
       await socket.sendMessage(remoteJid, {
@@ -145,7 +145,7 @@ export default {
               `[${barra}] ${porcentagem}%\n\n` +
               `📊 *Classificação:* ${classificacao}\n` +
               `📝 ${frase}`,
-        mentions: mentions
+        mentions: [lid1, lid2]
       });
 
     } catch (error) {
