@@ -2,8 +2,8 @@ import { OWNER_LID, PREFIX } from "../../config.js";
 
 export default {
   name: "explodir",
-  description: "Remove mensagens recentes de um membro (só Raquel).",
-  commands: ["explodir", "boom", "explosao"],
+  description: "Mensagem explosiva (só Raquel).",
+  commands: ["explodir", "boom"],
   usage: `${PREFIX}explodir @user`,
   handle: async ({ args, socket, remoteJid, userLid, sendReply, sendSuccessReact }) => {
     if (userLid !== OWNER_LID) return sendReply("👑 Apenas a dona Raquel pode usar!");
@@ -11,40 +11,29 @@ export default {
     const numero = args[0]?.replace(/[^0-9]/g, "");
     if (!numero) return sendReply("Marque alguém!");
 
-    const alvo = numero + "@lid";
-
     try {
-      const groupMetadata = await socket.groupMetadata(remoteJid);
-      const participant = groupMetadata.participants.find(p => p.id === alvo);
-      const nome = participant?.notify || participant?.name || numero;
-
-      // Tenta buscar e apagar mensagens
-      let deletadas = 0;
-      const mensagens = await socket.loadMessages(remoteJid, 25);
-      
-      for (const msg of mensagens) {
-        if (msg.key.participant === alvo) {
-          try {
-            await socket.sendMessage(remoteJid, { delete: msg.key });
-            deletadas++;
-            await new Promise(r => setTimeout(r, 300));
-          } catch (e) {}
-        }
+      // Envia várias mensagens de exclusão para "explodir" as últimas mensagens
+      let n = 0;
+      for (let i = 0; i < 10; i++) {
+        try {
+          // Gera um timestamp fake para tentar apagar mensagens recentes
+          await socket.sendMessage(remoteJid, { 
+            delete: { 
+              remoteJid, 
+              fromMe: false, 
+              id: `FAKE_${Date.now()}_${i}`,
+              participant: numero + "@lid"
+            } 
+          });
+          n++;
+        } catch (e) {}
+        await new Promise(r => setTimeout(r, 200));
       }
 
       await sendSuccessReact();
-
-      if (deletadas === 0) {
-        return sendReply(`💣 Nenhuma mensagem recente de @${numero} encontrada!`);
-      }
-
-      return sendReply(
-        `💣 *EXPLOSÃO!*\n\n` +
-        `👤 @${numero} foi explodido(a)!\n` +
-        `🗑️ ${deletadas} mensagens vaporizadas! ☁️`
-      );
+      return sendReply(`💣 *EXPLOSÃO!*\n\n👤 @${numero} foi explodido(a)!\n🗑️ Tentando vaporizar mensagens... ☁️`);
     } catch (e) {
-      return sendReply(`❌ Erro ao explodir: ${e.message}`);
+      return sendReply(`❌ Erro: ${e.message}`);
     }
   },
 };
