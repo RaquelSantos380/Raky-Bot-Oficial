@@ -1,6 +1,5 @@
 import { DEVELOPER_MODE, OWNER_LID } from "../config.js";
 import { badMacHandler } from "../utils/badMacHandler.js";
-import { autoRaquelHandler } from "./autoRaquel.js";
 import { checkIfMemberIsMuted } from "../utils/database.js";
 import { dynamicCommand } from "../utils/dynamicCommand.js";
 import {
