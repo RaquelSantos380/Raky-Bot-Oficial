@@ -100,10 +100,6 @@ export async function onMessagesUpsert({ socket, messages, startProcess }) {
       const commonFunctions = loadCommonFunctions({ socket, webMessage });
       if (!commonFunctions) continue;
 
-      if (commonFunctions.fullMessage) {
-        await autoRaquelHandler(socket, remoteJid, webMessage, commonFunctions.fullMessage);
-      }
-
       if (userLid && remoteJid) {
         const flooded = await antiFloodHandler(socket, remoteJid, userLid, webMessage);
         if (flooded) return;
