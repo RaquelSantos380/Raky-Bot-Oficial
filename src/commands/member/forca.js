@@ -1,4 +1,3 @@
-```javascript
 import fs from "fs";
 import path from "path";
 
@@ -33,11 +32,7 @@ const palavras = [
   "CHOCOLATE", "PIZZA", "HAMBURGUER", "PASTEL", "SORVETE",
   "PIPOCA", "BOLACHA", "MACARRAO", "FEIJOADA", "CHURRASCO",
   "BASQUETE", "VOLEIBOL", "NATACAO", "TENIS", "CORRIDA",
-  "CICLISMO", "SURFE", "SKATE", "BOXE", "JUDO",
-  "ESTUDAR", "TRABALHAR", "DORMIR", "CANTAR", "DANCAR",
-  "PULAR", "CORRER", "NADAR", "VOAR", "SONHAR",
   "ESTRELA", "FLORESTA", "MONTANHA", "VULCAO", "CACHOEIRA",
-  "TEMPESTADE", "ARCOIRIS", "RELAMPAGO", "TSUNAMI", "TERREMOTO",
 ];
 
 const DICAS = {
@@ -69,26 +64,18 @@ const DICAS = {
   "CANETA": "Objeto que escreve com tinta",
   "ESPELHO": "Reflete nossa imagem",
   "RELOGIO": "Mostra as horas",
-  "PRAIA": "Lugar com areia e mar, ótimo para relaxar",
+  "PRAIA": "Lugar com areia e mar",
   "FUTEBOL": "Esporte mais popular do Brasil",
   "CARNAVAL": "Festa brasileira com samba e desfiles",
-  "SHOPPING": "Lugar com muitas lojas e praça de alimentação",
+  "SHOPPING": "Lugar com muitas lojas",
   "BIBLIOTECA": "Lugar silencioso cheio de livros",
   "ESCOLA": "Lugar onde se estuda",
   "HOSPITAL": "Lugar onde se cuida da saúde",
   "CINEMA": "Lugar com tela grande e pipoca",
-  "IGREJA": "Lugar de oração e fé",
-  "RESTAURANTE": "Lugar onde se faz refeições fora de casa",
+  "RESTAURANTE": "Lugar onde se faz refeições",
   "PROFESSOR": "Profissional que ensina",
   "MEDICO": "Profissional que cuida da saúde",
   "BOMBEIRO": "Profissional que apaga incêndios",
-  "POLICIAL": "Profissional que protege a lei",
-  "ENGENHEIRO": "Profissional que projeta e constrói",
-  "ADVOGADO": "Profissional que defende na justiça",
-  "DENTISTA": "Profissional que cuida dos dentes",
-  "JORNALISTA": "Profissional que reporta notícias",
-  "COZINHEIRO": "Profissional que prepara alimentos",
-  "PINTOR": "Profissional que pinta quadros ou paredes",
   "WHATSAPP": "Aplicativo de mensagens mais famoso",
   "JAVASCRIPT": "Linguagem de programação da web",
   "INTERNET": "Rede mundial de computadores",
@@ -97,8 +84,8 @@ const DICAS = {
   "GOOGLE": "Maior site de buscas do mundo",
   "INSTAGRAM": "Rede social de fotos e vídeos",
   "FACEBOOK": "Rede social criada por Mark Zuckerberg",
-  "ROBLOX": "Plataforma de jogos online muito popular",
-  "TIKTOK": "Rede social de vídeos curtos e danças",
+  "ROBLOX": "Plataforma de jogos online",
+  "TIKTOK": "Rede social de vídeos curtos",
   "CHOCOLATE": "Doce marrom feito de cacau",
   "PIZZA": "Comida italiana redonda com queijo",
   "HAMBURGUER": "Sanduíche com carne, pão e queijo",
@@ -107,67 +94,34 @@ const DICAS = {
   "PIPOCA": "Comida estourada feita de milho",
   "BOLACHA": "Biscoito doce ou salgado",
   "MACARRAO": "Massa italiana com molho",
-  "FEIJOADA": "Prato típico brasileiro com feijão preto",
+  "FEIJOADA": "Prato típico brasileiro",
   "CHURRASCO": "Carne assada na brasa",
   "BASQUETE": "Esporte com bola e cesta",
   "VOLEIBOL": "Esporte de rede e bola",
   "NATACAO": "Esporte aquático",
-  "TENIS": "Esporte de raquete e bola amarela",
-  "CORRIDA": "Esporte de velocidade com os pés",
-  "CICLISMO": "Esporte com bicicleta",
-  "SURFE": "Esporte nas ondas do mar",
-  "SKATE": "Esporte com prancha e rodinhas",
-  "BOXE": "Esporte de luta com luvas",
-  "JUDO": "Arte marcial japonesa",
-  "ESTUDAR": "Ação de aprender algo novo",
-  "TRABALHAR": "Ação de exercer uma profissão",
-  "DORMIR": "Ação de descansar à noite",
-  "CANTAR": "Ação de emitir sons musicais",
-  "DANCAR": "Ação de se mover ao ritmo da música",
-  "PULAR": "Ação de saltar do chão",
-  "CORRER": "Ação de se mover rápido com os pés",
-  "NADAR": "Ação de se mover na água",
-  "VOAR": "Ação de se deslocar pelo ar",
-  "SONHAR": "Ação de imaginar enquanto dorme",
-  "ESTRELA": "Astro que brilha no céu à noite",
+  "TENIS": "Esporte de raquete",
+  "CORRIDA": "Esporte de velocidade",
+  "ESTRELA": "Astro que brilha no céu",
   "FLORESTA": "Grande área coberta de árvores",
   "MONTANHA": "Elevação natural do terreno",
   "VULCAO": "Montanha que expele lava",
   "CACHOEIRA": "Queda d'água natural",
-  "TEMPESTADE": "Fenômeno com chuva forte e trovões",
-  "ARCOIRIS": "Fenômeno colorido no céu após a chuva",
-  "RELAMPAGO": "Clarão no céu durante tempestade",
-  "TSUNAMI": "Onda gigante causada por terremoto",
-  "TERREMOTO": "Tremor de terra",
 };
-
-function getDica(palavra) {
-  return DICAS[palavra] || `Palavra de ${palavra.length} letras...`;
-}
 
 const jogos = {};
 
 export default {
   name: "forca",
-  description: "Jogo da Forca com dicas.",
+  description: "Jogo da Forca com dicas",
   commands: ["forca"],
   usage: `${PREFIX}forca iniciar\n${PREFIX}forca dica\n${PREFIX}forca l <letra>\n${PREFIX}forca chutar <palavra>`,
 
-  handle: async ({
-    args,
-    remoteJid,
-    userLid,
-    socket,
-    sendReply,
-    sendErrorReply,
-  }) => {
+  handle: async ({ args, remoteJid, userLid, socket, sendReply, sendErrorReply }) => {
     try {
-      // Verifica modo brincadeira
       if (isModoBrincadeiraAtivo(remoteJid)) {
-        const groupMetadata = await socket.groupMetadata(remoteJid);
-        const participant = groupMetadata.participants.find(p => p.id === userLid);
-        const isAdmin = participant?.admin === "admin" || participant?.admin === "superadmin";
-        if (!isAdmin) {
+        const gm = await socket.groupMetadata(remoteJid);
+        const p = gm.participants.find(p => p.id === userLid);
+        if (p?.admin !== "admin" && p?.admin !== "superadmin") {
           return sendReply("🎮 Apenas ADMINS podem usar este comando!");
         }
       }
@@ -175,17 +129,11 @@ export default {
       const action = args[0]?.toLowerCase();
       const gameKey = remoteJid;
 
-      if (!action || action === "status") {
-        const jogo = jogos[gameKey];
-        if (!jogo) return sendReply("Nenhum jogo em andamento! Use `" + PREFIX + "forca iniciar`.");
-        return sendReply(formatarForca(jogo));
-      }
-
-      if (action === "iniciar" || action === "novo") {
+      if (!action || action === "iniciar" || action === "novo") {
         const palavra = palavras[Math.floor(Math.random() * palavras.length)];
         jogos[gameKey] = {
           palavra,
-          dica: getDica(palavra),
+          dica: DICAS[palavra] || `Palavra de ${palavra.length} letras...`,
           letrasUsadas: [],
           erros: 0,
           maxErros: 6,
@@ -197,9 +145,9 @@ export default {
 
       if (action === "dica" || action === "hint") {
         const jogo = jogos[gameKey];
-        if (!jogo) return sendReply("Use `" + PREFIX + "forca iniciar` primeiro!");
+        if (!jogo) return sendReply("Use `/forca iniciar` primeiro!");
         if (!jogo.ativo) return sendReply("Jogo já acabou!");
-        if (jogo.dicasUsadas >= 3) return sendReply("❌ Você já usou todas as dicas!");
+        if (jogo.dicasUsadas >= 2) return sendReply("❌ Você já usou todas as dicas!");
 
         jogo.dicasUsadas++;
         const naoDescobertas = jogo.palavra.split("").filter(l => !jogo.letrasUsadas.includes(l));
@@ -208,43 +156,55 @@ export default {
         const letraRevelada = naoDescobertas[Math.floor(Math.random() * naoDescobertas.length)];
         jogo.letrasUsadas.push(letraRevelada);
 
-        const acertouTodas = jogo.palavra.split("").every(l => jogo.letrasUsadas.includes(l));
-        if (acertouTodas) { jogo.ativo = false; return sendReply(`🎉 *PARABÉNS!*\n\n${formatarForca(jogo)}\n\nPalavra: *${jogo.palavra}* 🏆`); }
-
-        return sendReply(`💡 *DICA (${jogo.dicasUsadas}/3)*\n🔍 Letra: *${letraRevelada}*\n📝 ${jogo.dica}\n\n${formatarForca(jogo)}`);
+        if (jogo.palavra.split("").every(l => jogo.letrasUsadas.includes(l))) {
+          jogo.ativo = false;
+          return sendReply(`🎉 *PARABÉNS!*\n${formatarForca(jogo)}\nPalavra: *${jogo.palavra}* 🏆`);
+        }
+        return sendReply(`💡 *DICA (${jogo.dicasUsadas}/2)*\n🔍 Letra revelada: *${letraRevelada}*\n📝 ${jogo.dica}\n\n${formatarForca(jogo)}`);
       }
 
       if (action === "letra" || action === "l") {
         const jogo = jogos[gameKey];
-        if (!jogo) return sendReply("Use `" + PREFIX + "forca iniciar` primeiro!");
+        if (!jogo) return sendReply("Use `/forca iniciar` primeiro!");
         if (!jogo.ativo) return sendReply("Jogo já acabou!");
 
         const letra = args[1]?.toUpperCase();
-        if (!letra || letra.length !== 1) throw new InvalidParameterError("Digite UMA letra!");
+        if (!letra || letra.length !== 1) return sendReply("Digite UMA letra!\nEx: `/forca l a`");
 
         if (jogo.letrasUsadas.includes(letra)) return sendReply("❌ Letra já usada!");
         jogo.letrasUsadas.push(letra);
 
         if (!jogo.palavra.includes(letra)) {
           jogo.erros++;
-          if (jogo.erros >= jogo.maxErros) { jogo.ativo = false; return sendReply(`💀 *PERDEU!*\n${formatarForca(jogo)}\nPalavra: *${jogo.palavra}*`); }
+          if (jogo.erros >= jogo.maxErros) {
+            jogo.ativo = false;
+            return sendReply(`💀 *VOCÊ PERDEU!*\n${formatarForca(jogo)}\nA palavra era: *${jogo.palavra}*`);
+          }
           return sendReply(`❌ "${letra}" não encontrada!\n${formatarForca(jogo)}`);
         }
 
-        const acertouTodas = jogo.palavra.split("").every(l => jogo.letrasUsadas.includes(l));
-        if (acertouTodas) { jogo.ativo = false; return sendReply(`🎉 *PARABÉNS!*\n${formatarForca(jogo)}\nPalavra: *${jogo.palavra}* 🏆`); }
+        if (jogo.palavra.split("").every(l => jogo.letrasUsadas.includes(l))) {
+          jogo.ativo = false;
+          return sendReply(`🎉 *PARABÉNS!*\n${formatarForca(jogo)}\nPalavra: *${jogo.palavra}* 🏆`);
+        }
         return sendReply(`✅ "${letra}" encontrada!\n${formatarForca(jogo)}`);
       }
 
       if (action === "chutar" || action === "chute") {
         const jogo = jogos[gameKey];
-        if (!jogo) return sendReply("Use `" + PREFIX + "forca iniciar` primeiro!");
+        if (!jogo) return sendReply("Use `/forca iniciar` primeiro!");
         const chute = args.slice(1).join("").toUpperCase();
-        if (!chute) throw new InvalidParameterError("Digite uma palavra!");
-        if (chute === jogo.palavra) { jogo.ativo = false; return sendReply(`🎉 *PARABÉNS!*\nPalavra: *${jogo.palavra}* 🏆`); }
-        jogo.erros = jogo.maxErros; jogo.ativo = false;
+        if (!chute) return sendReply("Digite uma palavra!");
+        if (chute === jogo.palavra) {
+          jogo.ativo = false;
+          return sendReply(`🎉 *PARABÉNS!*\nPalavra: *${jogo.palavra}* 🏆`);
+        }
+        jogo.erros = jogo.maxErros;
+        jogo.ativo = false;
         return sendReply(`💀 *ERROU!*\nPalavra era: *${jogo.palavra}*`);
       }
+
+      return sendReply("Use: `/forca iniciar`, `/forca l a`, `/forca dica`, `/forca chutar palavra`");
     } catch (error) {
       await sendErrorReply(`${error.message}`);
     }
@@ -252,8 +212,15 @@ export default {
 };
 
 function formatarForca(jogo) {
-  const boneco = ["  😊","  😟\n  O","  😰\n  O\n  |","  😨\n  O\n /|","  😱\n  O\n /|\\","  💀\n  O\n /|\\\n /","  💀\n  O\n /|\\\n / \\"];
+  const boneco = [
+    "  😊",
+    "  😟\n  O",
+    "  😰\n  O\n  |",
+    "  😨\n  O\n /|",
+    "  😱\n  O\n /|\\",
+    "  💀\n  O\n /|\\\n /",
+    "  💀\n  O\n /|\\\n / \\",
+  ];
   const palavraEscondida = jogo.palavra.split("").map(l => jogo.letrasUsadas.includes(l) ? l : "_").join(" ");
-  return `${boneco[Math.min(jogo.erros, 6)]}\n\n📝 ${palavraEscondida}\n\n💡 ${jogo.dica}\n🔤 Letras: ${jogo.letrasUsadas.join(" ") || "Nenhuma"}\n❌ Erros: ${jogo.erros}/${jogo.maxErros} | 💡 Dicas: ${jogo.dicasUsadas}/3`;
+  return `${boneco[Math.min(jogo.erros, 6)]}\n\n📝 ${palavraEscondida}\n\n💡 ${jogo.dica}\n🔤 Letras: ${jogo.letrasUsadas.join(" ") || "Nenhuma"}\n❌ Erros: ${jogo.erros}/${jogo.maxErros} | 💡 Dicas: ${jogo.dicasUsadas}/2`;
 }
-```
