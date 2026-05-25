@@ -1,10 +1,9 @@
 /**
  * Desenvolvido por: Mkg
  * Refatorado por: Dev Gui
- *
- * @author Dev Gui
+ * Proteção Raquel adicionada
  */
-import { PREFIX } from "../../config.js";
+import { PREFIX, OWNER_LID } from "../../config.js";
 import { InvalidParameterError } from "../../errors/index.js";
 
 export default {
@@ -12,14 +11,20 @@ export default {
   description: "Cria uma citação falsa mencionando um usuário",
   commands: ["fake-chat", "fq", "fake-quote", "f-quote", "fk"],
   usage: `${PREFIX}fake-chat @usuário / texto citado / mensagem que será enviada`,
-  /**
-   * @param {CommandHandleProps} props
-   */
-  handle: async ({ remoteJid, socket, args }) => {
+  
+  handle: async ({ remoteJid, socket, args, sendReply }) => {
     if (args.length !== 3) {
       throw new InvalidParameterError(
         `Uso incorreto do comando. Exemplo: ${PREFIX}fake-chat @usuário / texto citado / mensagem que será enviada`
       );
+    }
+
+    // 🛡️ PROTEÇÃO RAQUEL
+    const alvoNum = args[0]?.replace(/[^0-9]/g, "");
+    const raquelNum = OWNER_LID.replace(/[^0-9]/g, "");
+    
+    if (alvoNum === raquelNum) {
+      return sendReply("🚫 Não é possível criar fake com a dona Raquel!");
     }
 
     const quotedText = args[1];
