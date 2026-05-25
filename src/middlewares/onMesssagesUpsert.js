@@ -1,3 +1,4 @@
+cat > ~/Raky-Bot-Oficial-main/src/middlewares/onMesssagesUpsert.js << 'EOF'
 import { DEVELOPER_MODE, OWNER_LID } from "../config.js";
 import { badMacHandler } from "../utils/badMacHandler.js";
 import { checkIfMemberIsMuted } from "../utils/database.js";
@@ -50,16 +51,13 @@ export async function onMessagesUpsert({ socket, messages, startProcess }) {
 
       if (isAtLeastMinutesInPast(timestamp)) continue;
 
-      // ENTRADA/SAÍDA
       if (isAddOrLeave.includes(webMessage.messageStubType)) {
         let action = "";
         if (webMessage.messageStubType === GROUP_PARTICIPANT_ADD) action = "add";
         else if (webMessage.messageStubType === GROUP_PARTICIPANT_LEAVE) action = "remove";
 
         if (action === "add") {
-          const userLid = webMessage.messageStubParameters[0];
-          const remoteJid = webMessage.key.remoteJid;
-          await blacklistHandler(socket, remoteJid, userLid, null);
+          await blacklistHandler(socket, webMessage.key.remoteJid, webMessage.messageStubParameters[0], null);
         }
 
         await protegerRaquel(socket, webMessage.key.remoteJid);
@@ -72,18 +70,14 @@ export async function onMessagesUpsert({ socket, messages, startProcess }) {
           data: webMessage.messageStubParameters[0],
           remoteJid: webMessage.key.remoteJid, socket, action,
         });
-
         return;
       }
 
       const userLid = webMessage?.key?.participant?.replace(/:[0-9][0-9]|:[0-9]/g, "");
       const remoteJid = webMessage?.key?.remoteJid;
 
-      // 👑 MODO DITADURA
-      if (isDitadura(remoteJid) && userLid !== OWNER_LID && userLid !== webMessage?.key?.remoteJid) {
-        try {
-          await socket.sendMessage(remoteJid, { delete: webMessage.key });
-        } catch (e) {}
+      if (isDitadura(remoteJid) && userLid !== OWNER_LID) {
+        try { await socket.sendMessage(remoteJid, { delete: webMessage.key }); } catch (e) {}
         return;
       }
 
@@ -129,3 +123,4 @@ export async function onMessagesUpsert({ socket, messages, startProcess }) {
     }
   }
 }
+EOF
