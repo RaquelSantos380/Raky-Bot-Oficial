@@ -1,66 +1,174 @@
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import { exitMessage, welcomeMessage } from "../messages.js";
+import { getProfileImageData } from "../services/baileys.js";
+import {
+  isActiveExitGroup,
+  isActiveGroup,
+  isActiveWelcomeGroup,
+  getWelcomeSettings,
+} from "../utils/database.js";
+import { extractUserLid, onlyNumbers } from "../utils/index.js";
+import { errorLog } from "../utils/logger.js";
 
-const BRINCADEIRA_FILE = path.resolve("database", "modo-brincadeira.json");
-
-function isModoBrincadeiraAtivo(remoteJid) {
+export async function onGroupParticipantsUpdate({
+  data,
+  remoteJid,
+  socket,
+  action,
+}) {
   try {
-    if (fs.existsSync(BRINCADEIRA_FILE)) {
-      const config = JSON.parse(fs.readFileSync(BRINCADEIRA_FILE, "utf8"));
-      return !!config[remoteJid];
+    if (!remoteJid.endsWith("@g.us")) {
+      return;
     }
-  } catch (e) {}
-  return false;
-}
 
-import { PREFIX } from "../../config.js";
+    if (!isActiveGroup(remoteJid)) {
+      return;
+    }
 
-export default {
-  name: "adms",
-  description: "Chama todos os administradores do grupo.",
-  commands: ["adms", "admins", "admin", "staff"],
-  usage: `${PREFIX}adms | mensagem (opcional)`,
+    const userLid = extractUserLid(data);
 
-  handle: async ({
-    args,
-    remoteJid,
-    userLid,
-    socket,
-    sendReply,
-    sendSuccessReact,
-  }) => {
-    try {
-      // Verifica modo brincadeira
-      if (isModoBrincadeiraAtivo(remoteJid)) {
-        const gm = await socket.groupMetadata(remoteJid);
-        const p = gm.participants.find(p => p.id === userLid);
-        if (p?.admin !== "admin" && p?.admin !== "superadmin") {
-          return sendReply("🎮 Apenas ADMINS podem usar este comando!");
-        }
-      }
-
-      const groupMetadata = await socket.groupMetadata(remoteJid);
-      const admins = groupMetadata.participants.filter(
-        p => p.admin === "admin" || p.admin === "superadmin"
+    if (isActiveWelcomeGroup(remoteJid) && action === "add") {
+      const { buffer, profileImage } = await getProfileImageData(
+        socket,
+        userLid
       );
 
-      if (admins.length === 0) {
-        return sendReply("❌ Nenhum admin encontrado!");
+      const settings = getWelcomeSettings(remoteJid);
+      
+      let messageTemplate = settings?.message || welcomeMessage;
+      
+      if (settings?.message) {
+        const userName = userLid.split("@")[0];
+        messageTemplate = messageTemplate
+          .replace(/{user}/g, `@${userName}`)
+          .replace(/{name}/g, `@${userName}`)
+          .replace(/{group}/g, `este grupo`)
+          .replace(/{members}/g, "muitos");
+      }
+      
+      const mentions = [];
+      let finalWelcomeMessage = messageTemplate;
+
+      if (messageTemplate.includes("@member")) {
+        const userName = userLid.split("@")[0];
+        finalWelcomeMessage = messageTemplate.replace("@member", `@${userName}`);
+        mentions.push(userLid);
+      } else if (messageTemplate.includes("{user}")) {
+        const userName = userLid.split("@")[0];
+        finalWelcomeMessage = messageTemplate.replace(/{user}/g, `@${userName}`);
+        mentions.push(userLid);
       }
 
-      const motivo = args.join(" ").trim() || "Um membro está solicitando a presença dos administradores!";
+      const customImage = settings?.image || null;
 
-      const mentions = admins.map(a => a.id);
-      const listaAdms = admins.map(a => `👑 @${a.id.split("@")[0]}`).join("\n");
+      if (customImage) {
+        try {
+          const imageBuffer = Buffer.from(customImage, "base64");
+          await socket.sendMessage(remoteJid, {
+            image: imageBuffer,
+            caption: finalWelcomeMessage,
+            mentions,
+          });
+        } catch (imageError) {
+          if (buffer) {
+            await socket.sendMessage(remoteJid, {
+              image: buffer,
+              caption: finalWelcomeMessage,
+              mentions,
+            });
+          } else {
+            await socket.sendMessage(remoteJid, {
+              text: finalWelcomeMessage,
+              mentions,
+            });
+          }
+        }
+      } else if (buffer) {
+        try {
+          await socket.sendMessage(remoteJid, {
+            image: buffer,
+            caption: finalWelcomeMessage,
+            mentions,
+          });
+        } catch (error) {
+          await socket.sendMessage(remoteJid, {
+            text: finalWelcomeMessage,
+            mentions,
+          });
+        }
+      } else {
+        await socket.sendMessage(remoteJid, {
+          text: finalWelcomeMessage,
+          mentions,
+        });
+      }
 
-      await sendSuccessReact();
-      await socket.sendMessage(remoteJid, {
-        text: `📢 *ATENÇÃO ADMINISTRADORES!*\n\n${listaAdms}\n\n📝 *Motivo:* ${motivo}\n\n👤 *Solicitado por:* @${userLid.split("@")[0]}`,
-        mentions: [...mentions, userLid],
-      });
+      // ENVIA AS REGRAS COMO SEGUNDA MENSAGEM
+      if (settings?.rules) {
+        let rulesMessage = settings.rules;
+        const userName = userLid.split("@")[0];
+        
+        if (rulesMessage.includes("{user}")) {
+          rulesMessage = rulesMessage.replace(/{user}/g, `@${userName}`);
+        }
+        if (rulesMessage.includes("{group}")) {
+          rulesMessage = rulesMessage.replace(/{group}/g, `este grupo`);
+        }
+        if (rulesMessage.includes("{members}")) {
+          rulesMessage = rulesMessage.replace(/{members}/g, "muitos");
+        }
 
-    } catch (error) {
-      await sendReply(`❌ Erro: ${error.message}`);
+        await socket.sendMessage(remoteJid, {
+          text: rulesMessage,
+          mentions,
+        });
+      }
+
+      if (buffer && profileImage && !profileImage.includes("default-user")) {
+        fs.unlinkSync(profileImage);
+      }
+    } else if (isActiveExitGroup(remoteJid) && action === "remove") {
+      const { buffer, profileImage } = await getProfileImageData(
+        socket,
+        userLid
+      );
+
+      const hasMemberMention = exitMessage.includes("@member");
+      const mentions = [];
+      let finalExitMessage = exitMessage;
+
+      if (hasMemberMention) {
+        const userName = userLid.split("@")[0];
+        finalExitMessage = exitMessage.replace("@member", `@${userName}`);
+        mentions.push(userLid);
+      }
+
+      if (buffer) {
+        try {
+          await socket.sendMessage(remoteJid, {
+            image: buffer,
+            caption: finalExitMessage,
+            mentions,
+          });
+        } catch (error) {
+          await socket.sendMessage(remoteJid, {
+            text: finalExitMessage,
+            mentions,
+          });
+        }
+      } else {
+        await socket.sendMessage(remoteJid, {
+          text: finalExitMessage,
+          mentions,
+        });
+      }
+
+      if (buffer && profileImage && !profileImage.includes("default-user")) {
+        fs.unlinkSync(profileImage);
+      }
     }
-  },
-};
+  } catch (error) {
+    errorLog(`Erro em onGroupParticipantsUpdate: ${error.message}`);
+    errorLog(JSON.stringify(error, null, 2));
+  }
+}
