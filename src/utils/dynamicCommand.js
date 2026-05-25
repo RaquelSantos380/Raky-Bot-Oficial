@@ -1,4 +1,4 @@
-**
+/**
  * Direcionador
  * de comandos.
  *
@@ -111,7 +111,6 @@ export async function dynamicCommand(paramsHandler, startProcess) {
 
   if (fullMessage === groupPrefix) {
     await sendReact(BOT_EMOJI);
-    await sendReply(`Este é meu prefixo! Use ${groupPrefix}menu para ver os comandos disponíveis!`);
     return;
   }
 
