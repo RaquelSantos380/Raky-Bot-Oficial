@@ -1,4 +1,3 @@
-cat > ~/Raky-Bot-Oficial-main/src/middlewares/onMesssagesUpsert.js << 'EOF'
 import { DEVELOPER_MODE, OWNER_LID } from "../config.js";
 import { badMacHandler } from "../utils/badMacHandler.js";
 import { checkIfMemberIsMuted } from "../utils/database.js";
