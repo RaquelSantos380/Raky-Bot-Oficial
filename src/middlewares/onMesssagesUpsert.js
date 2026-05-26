@@ -122,4 +122,3 @@ export async function onMessagesUpsert({ socket, messages, startProcess }) {
     }
   }
 }
-EOF

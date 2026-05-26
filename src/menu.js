@@ -71,7 +71,9 @@ export function menuMessage(groupJid) {
 ▢ • ${prefix}bloquear-palavra
 ▢ • ${prefix}lista-negra
 ▢ • ${prefix}only-admin (1/0)
-▢ • ${prefix}adms — Chamar staff
+▢ • ${prefix}links add/remove/list
+▢ • ${prefix}avisos
+▢ • ${prefix}avisos reset @user
 ▢
 ╰━━─「⚙️」─━━
 
@@ -91,6 +93,11 @@ export function menuMessage(groupJid) {
 ▢ • ${prefix}rename
 ▢ • ${prefix}fake-chat
 ▢ • ${prefix}suporte
+▢ • ${prefix}adms — Chamar administradores
+▢ • ${prefix}conselho — Conselho do dia 💡
+▢ • ${prefix}conselho | amoroso
+▢ • ${prefix}conselho | financeiro
+▢ • ${prefix}conselho | vida
 ▢
 ╰━━─「👥」─━━`;
 
@@ -113,6 +120,8 @@ export function menuMessage(groupJid) {
 ▢ • ${prefix}defeitos @user — Defeitos 😂
 ▢ • ${prefix}pensao @user — Pensão 😂
 ▢ • ${prefix}previsao @user — Futuro 🔮
+▢ • ${prefix}chances | algo — Chances 🎲
+▢ • ${prefix}feitico @user — Feitiço 🪄
 ▢
 ╰━━─「🎡」─━━
 
