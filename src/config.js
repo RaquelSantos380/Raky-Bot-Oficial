@@ -70,3 +70,5 @@ export const PROXY_PASSWORD = "";
 
 // Chave da OpenAI para o comando de suporte
 export const OPENAI_API_KEY = "";
+
+export const OPENAI_API_KEY = "AIzaSyAFqHanwwn7naYviyRu8Tuv7Y5drqT_unI";
