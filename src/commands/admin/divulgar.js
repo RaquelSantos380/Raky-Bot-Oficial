@@ -8,9 +8,7 @@ const AGENDAMENTOS_FILE = path.resolve("database", "agendamentos.json");
 
 function lerMensagens() {
   try {
-    if (fs.existsSync(MENSAGENS_FILE)) {
-      return JSON.parse(fs.readFileSync(MENSAGENS_FILE, "utf8"));
-    }
+    if (fs.existsSync(MENSAGENS_FILE)) return JSON.parse(fs.readFileSync(MENSAGENS_FILE, "utf8"));
   } catch (e) {}
   return [];
 }
@@ -21,9 +19,7 @@ function salvarMensagens(lista) {
 
 function lerAgendamentos() {
   try {
-    if (fs.existsSync(AGENDAMENTOS_FILE)) {
-      return JSON.parse(fs.readFileSync(AGENDAMENTOS_FILE, "utf8"));
-    }
+    if (fs.existsSync(AGENDAMENTOS_FILE)) return JSON.parse(fs.readFileSync(AGENDAMENTOS_FILE, "utf8"));
   } catch (e) {}
   return {};
 }
@@ -42,38 +38,23 @@ function salvarAgendamentos(lista) {
   fs.writeFileSync(AGENDAMENTOS_FILE, JSON.stringify(paraSalvar, null, 2));
 }
 
-// Cache de intervalos ativos
 const intervalosAtivos = {};
 
 export function iniciarAgendamentos(socket) {
   const agendamentosSalvos = lerAgendamentos();
-  
   for (const [key, data] of Object.entries(agendamentosSalvos)) {
-    if (intervalosAtivos[key]) {
-      clearInterval(intervalosAtivos[key]);
-    }
-
+    if (intervalosAtivos[key]) clearInterval(intervalosAtivos[key]);
     if (data.tipo === "texto") {
       intervalosAtivos[key] = setInterval(async () => {
         for (const id of data.gruposIds) {
-          try {
-            await socket.sendMessage(id, { text: data.texto });
-            await new Promise(r => setTimeout(r, 2000));
-          } catch (e) {}
+          try { await socket.sendMessage(id, { text: data.texto }); await new Promise(r => setTimeout(r, 2000)); } catch (e) {}
         }
       }, data.minutos * 60000);
     }
-
     if (data.tipo === "foto" && data.base64) {
       intervalosAtivos[key] = setInterval(async () => {
         for (const id of data.gruposIds) {
-          try {
-            await socket.sendMessage(id, { 
-              image: Buffer.from(data.base64, "base64"), 
-              caption: data.texto || "" 
-            });
-            await new Promise(r => setTimeout(r, 2000));
-          } catch (e) {}
+          try { await socket.sendMessage(id, { image: Buffer.from(data.base64, "base64"), caption: data.texto || "" }); await new Promise(r => setTimeout(r, 2000)); } catch (e) {}
         }
       }, data.minutos * 60000);
     }
@@ -91,7 +72,7 @@ export default {
   name: "divulgar",
   description: "Envia mensagem para grupos do WhatsApp.",
   commands: ["divulgar", "div", "grupos"],
-  usage: `${PREFIX}divulgar | mensagem\n${PREFIX}grupos\n${PREFIX}divulgar enviar | ID | mensagem`,
+  usage: `${PREFIX}divulgar enviar | ID | mensagem\n${PREFIX}divulgar agendar | minutos | ID | mensagem\n${PREFIX}divulgar agendarfoto | minutos | ID | legenda\n${PREFIX}divulgar parar`,
 
   handle: async ({
     args,
@@ -101,33 +82,26 @@ export default {
     sendReply,
     sendSuccessReply,
     sendErrorReply,
-    sendWaitReact,
     sendSuccessReact,
   }) => {
     try {
       if (!args.length) {
-        if (webMessage?.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage) {
-          return await divulgarImagem(socket, webMessage, "", sendReply, sendSuccessReact);
-        }
         return sendReply(
           `📢 *Divulgação*\n\n` +
-          `• ${PREFIX}divulgar | mensagem\n` +
-          `  Envia para TODOS os grupos\n\n` +
-          `• ${PREFIX}grupos\n` +
-          `  Lista grupos com IDs\n\n` +
-          `• ${PREFIX}divulgar enviar | ID1 | ID2 | mensagem\n` +
+          `⚠️ *ATENÇÃO:* É obrigatório informar o ID do grupo!\n\n` +
+          `• ${PREFIX}grupos — Lista grupos com IDs\n` +
+          `• ${PREFIX}divulgar enviar | ID | mensagem\n` +
           `  Envia para grupos específicos\n\n` +
           `• ${PREFIX}divulgar agendar | minutos | ID | mensagem\n` +
           `  Agenda divulgação recorrente\n\n` +
           `• ${PREFIX}divulgar agendarfoto | minutos | ID | legenda\n` +
           `  (Responda uma foto) Agenda com imagem\n\n` +
-          `• ${PREFIX}divulgar parar\n` +
-          `  Para agendamento\n\n` +
+          `• ${PREFIX}divulgar parar — Para TODOS os agendamentos\n\n` +
           `• ${PREFIX}divulgar salvar | mensagem\n` +
           `• ${PREFIX}divulgar lista\n` +
           `• ${PREFIX}divulgar usar | 1\n` +
           `• ${PREFIX}divulgar deletar | 1\n\n` +
-          `📸 *Foto:* Responda uma foto com ${PREFIX}divulgar | legenda`
+          `📸 *Foto:* Responda uma foto com ${PREFIX}divulgar enviar | ID | legenda`
         );
       }
 
@@ -145,19 +119,20 @@ export default {
         return sendReply(msg);
       }
 
-      // PARAR AGENDAMENTO
-      if (action === "parar" || action === "stop") {
-        const keys = Object.keys(intervalosAtivos).filter(k => k.startsWith(remoteJid));
+      // 🛑 PARAR TUDO
+      if (action === "parar" || action === "stop" || action === "cancelar") {
+        const keys = Object.keys(intervalosAtivos);
         if (keys.length > 0) {
           keys.forEach(k => {
             clearInterval(intervalosAtivos[k]);
             delete intervalosAtivos[k];
           });
-          // Também remove do arquivo
           const agendamentosSalvos = lerAgendamentos();
-          keys.forEach(k => delete agendamentosSalvos[k]);
-          salvarAgendamentos(agendamentosSalvos);
-          return sendReply("⏹️ Agendamento cancelado!");
+          for (const k of Object.keys(agendamentosSalvos)) {
+            delete agendamentosSalvos[k];
+          }
+          salvarAgendamentos({});
+          return sendReply("⏹️ *TODOS* os agendamentos foram cancelados!");
         }
         return sendReply("Nenhum agendamento ativo.");
       }
@@ -168,47 +143,28 @@ export default {
         const gruposIds = args.slice(2).filter(a => a.includes("@g.us"));
         const texto = args.slice(2).filter(a => !a.includes("@g.us")).join(" ").trim();
 
-        if (!minutos || minutos < 1) throw new InvalidParameterError("Digite os minutos!\nEx: !divulgar agendar | 5 | ID | msg");
-        if (gruposIds.length === 0) throw new InvalidParameterError("Mencione os IDs dos grupos!");
+        if (!minutos || minutos < 1) throw new InvalidParameterError("Digite os minutos!");
+        if (gruposIds.length === 0) throw new InvalidParameterError("⚠️ Mencione os IDs dos grupos!");
         if (!texto) throw new InvalidParameterError("Digite a mensagem!");
 
-        const key = remoteJid + "_texto";
+        const key = remoteJid + "_texto_" + Date.now();
+        if (intervalosAtivos[key]) clearInterval(intervalosAtivos[key]);
 
-        // Para agendamento anterior
-        if (intervalosAtivos[key]) {
-          clearInterval(intervalosAtivos[key]);
-        }
-
-        // Envia primeira vez
         for (const id of gruposIds) {
-          try {
-            await socket.sendMessage(id, { text: texto });
-            await new Promise(r => setTimeout(r, 2000));
-          } catch (e) {}
+          try { await socket.sendMessage(id, { text: texto }); await new Promise(r => setTimeout(r, 2000)); } catch (e) {}
         }
 
-        // Agenda
         intervalosAtivos[key] = setInterval(async () => {
           for (const id of gruposIds) {
-            try {
-              await socket.sendMessage(id, { text: texto });
-              await new Promise(r => setTimeout(r, 2000));
-            } catch (e) {}
+            try { await socket.sendMessage(id, { text: texto }); await new Promise(r => setTimeout(r, 2000)); } catch (e) {}
           }
         }, minutos * 60000);
 
-        // Salva no arquivo
         const agendamentosSalvos = lerAgendamentos();
-        agendamentosSalvos[key] = {
-          tipo: "texto",
-          gruposIds,
-          texto,
-          minutos,
-          base64: ""
-        };
+        agendamentosSalvos[key] = { tipo: "texto", gruposIds, texto, minutos, base64: "" };
         salvarAgendamentos(agendamentosSalvos);
 
-        return sendReply(`⏰ Agendado a cada ${minutos}min!\nUse ${PREFIX}divulgar parar para cancelar.`);
+        return sendReply(`⏰ Agendado a cada ${minutos}min!\nUse \`${PREFIX}divulgar parar\` para cancelar.`);
       }
 
       // AGENDAR FOTO
@@ -217,8 +173,8 @@ export default {
         const gruposIds = args.slice(2).filter(a => a.includes("@g.us"));
         const texto = args.slice(2).filter(a => !a.includes("@g.us")).join(" ").trim();
 
-        if (!minutos || minutos < 1) throw new InvalidParameterError("Digite os minutos!\nEx: !divulgar agendarfoto | 5 | ID | legenda");
-        if (gruposIds.length === 0) throw new InvalidParameterError("Mencione os IDs dos grupos!");
+        if (!minutos || minutos < 1) throw new InvalidParameterError("Digite os minutos!");
+        if (gruposIds.length === 0) throw new InvalidParameterError("⚠️ Mencione os IDs dos grupos!");
 
         const quotedMessage = webMessage?.message?.extendedTextMessage?.contextInfo?.quotedMessage;
         const isQuotedImage = quotedMessage?.imageMessage;
@@ -230,73 +186,46 @@ export default {
         for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
         const base64 = buffer.toString("base64");
 
-        const key = remoteJid + "_foto";
+        const key = remoteJid + "_foto_" + Date.now();
+        if (intervalosAtivos[key]) clearInterval(intervalosAtivos[key]);
 
-        // Para agendamento anterior
-        if (intervalosAtivos[key]) {
-          clearInterval(intervalosAtivos[key]);
-        }
-
-        // Envia primeira vez
         for (const id of gruposIds) {
-          try {
-            await socket.sendMessage(id, { 
-              image: Buffer.from(base64, "base64"), 
-              caption: texto || "" 
-            });
-            await new Promise(r => setTimeout(r, 2000));
-          } catch (e) {}
+          try { await socket.sendMessage(id, { image: Buffer.from(base64, "base64"), caption: texto || "" }); await new Promise(r => setTimeout(r, 2000)); } catch (e) {}
         }
 
-        // Agenda
         intervalosAtivos[key] = setInterval(async () => {
           for (const id of gruposIds) {
-            try {
-              await socket.sendMessage(id, { 
-                image: Buffer.from(base64, "base64"), 
-                caption: texto || "" 
-              });
-              await new Promise(r => setTimeout(r, 2000));
-            } catch (e) {}
+            try { await socket.sendMessage(id, { image: Buffer.from(base64, "base64"), caption: texto || "" }); await new Promise(r => setTimeout(r, 2000)); } catch (e) {}
           }
         }, minutos * 60000);
 
-        // Salva no arquivo
         const agendamentosSalvos = lerAgendamentos();
-        agendamentosSalvos[key] = {
-          tipo: "foto",
-          gruposIds,
-          texto,
-          minutos,
-          base64
-        };
+        agendamentosSalvos[key] = { tipo: "foto", gruposIds, texto, minutos, base64 };
         salvarAgendamentos(agendamentosSalvos);
 
-        return sendReply(`⏰📸 Agendado com foto a cada ${minutos}min!\nUse ${PREFIX}divulgar parar para cancelar.`);
+        return sendReply(`⏰📸 Agendado com foto a cada ${minutos}min!\nUse \`${PREFIX}divulgar parar\` para cancelar.`);
       }
 
       // ENVIAR PARA GRUPOS ESPECÍFICOS
       if (action === "enviar") {
         const gruposIds = args.slice(1).filter(a => a.includes("@g.us"));
         const texto = args.slice(1).filter(a => !a.includes("@g.us")).join(" ").trim();
-        if (gruposIds.length === 0) throw new InvalidParameterError("Mencione os IDs dos grupos!");
+        if (gruposIds.length === 0) throw new InvalidParameterError("⚠️ Mencione os IDs dos grupos!");
         if (!texto) throw new InvalidParameterError("Digite a mensagem!");
         await sendSuccessReact();
         let sucessos = 0;
         for (const id of gruposIds) {
-          try {
-            await socket.sendMessage(id, { text: texto });
-            sucessos++;
-            await new Promise(r => setTimeout(r, 2000));
-          } catch (e) {}
+          try { await socket.sendMessage(id, { text: texto }); sucessos++; await new Promise(r => setTimeout(r, 2000)); } catch (e) {}
         }
         return sendReply(`✅ Enviado para ${sucessos}/${gruposIds.length} grupos!`);
       }
 
-      // DIVULGAR IMAGEM (responder foto)
+      // DIVULGAR IMAGEM (responder foto) - SÓ com ID
       if (webMessage?.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage) {
-        const texto = args.join(" ").trim();
-        return await divulgarImagem(socket, webMessage, texto, sendReply, sendSuccessReact);
+        const gruposIds = args.filter(a => a.includes("@g.us"));
+        if (gruposIds.length === 0) return sendReply("⚠️ Mencione os IDs dos grupos!");
+        const texto = args.filter(a => !a.includes("@g.us")).join(" ").trim();
+        return await divulgarImagem(socket, webMessage, texto, gruposIds, sendReply, sendSuccessReact);
       }
 
       // SALVAR MENSAGEM
@@ -324,10 +253,7 @@ export default {
 
       // USAR MENSAGEM
       if (action === "usar" || action === "use") {
-        const index = parseInt(args[1]) - 1;
-        const lista = lerMensagens();
-        if (!lista[index]) throw new InvalidParameterError("Mensagem não encontrada!");
-        return await enviarParaTodos(socket, lista[index].texto, sendReply, sendSuccessReact);
+        return sendReply("⚠️ Use `/divulgar enviar | ID | mensagem` em vez disso.");
       }
 
       // DELETAR MENSAGEM
@@ -342,9 +268,7 @@ export default {
         return sendReply("✅ Mensagem deletada!");
       }
 
-      // DIVULGAR PARA TODOS
-      const texto = args.join(" ").trim();
-      return await enviarParaTodos(socket, texto, sendReply, sendSuccessReact);
+      throw new InvalidParameterError("⚠️ Use: `/divulgar enviar | ID | mensagem`");
 
     } catch (error) {
       await sendErrorReply(`${error.message}`);
@@ -352,7 +276,7 @@ export default {
   },
 };
 
-async function divulgarImagem(socket, webMessage, texto, sendReply, sendSuccessReact) {
+async function divulgarImagem(socket, webMessage, texto, gruposIds, sendReply, sendSuccessReact) {
   const isQuotedImage = webMessage.message.extendedTextMessage.contextInfo.quotedMessage.imageMessage;
   await sendSuccessReact();
   const { downloadContentFromMessage } = await import("baileys");
@@ -360,33 +284,9 @@ async function divulgarImagem(socket, webMessage, texto, sendReply, sendSuccessR
   let buffer = Buffer.from([]);
   for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
 
-  const chats = await socket.groupFetchAllParticipating();
-  const grupos = Object.values(chats);
   let sucessos = 0;
-  for (const grupo of grupos) {
-    try {
-      await socket.sendMessage(grupo.id, { image: buffer, caption: texto || "" });
-      sucessos++;
-      await new Promise(r => setTimeout(r, 2000));
-    } catch (e) {}
+  for (const id of gruposIds) {
+    try { await socket.sendMessage(id, { image: buffer, caption: texto || "" }); sucessos++; await new Promise(r => setTimeout(r, 2000)); } catch (e) {}
   }
-  return sendReply(`✅ Imagem divulgada em ${sucessos}/${grupos.length} grupos!`);
-}
-
-async function enviarParaTodos(socket, texto, sendReply, sendSuccessReact) {
-  await sendSuccessReact();
-  await sendReply("🚀 Buscando grupos...");
-  const chats = await socket.groupFetchAllParticipating();
-  const grupos = Object.values(chats);
-  if (grupos.length === 0) return sendReply("❌ Nenhum grupo encontrado!");
-  let sucessos = 0;
-  let erros = 0;
-  for (const grupo of grupos) {
-    try {
-      await socket.sendMessage(grupo.id, { text: texto });
-      sucessos++;
-      await new Promise(r => setTimeout(r, 2000));
-    } catch (e) { erros++; }
-  }
-  return sendReply(`✅ *Divulgação concluída!*\n\n📊 Grupos: ${grupos.length}\n✅ Sucessos: ${sucessos}\n❌ Erros: ${erros}`);
+  return sendReply(`✅ Imagem divulgada em ${sucessos}/${gruposIds.length} grupos!`);
 }
