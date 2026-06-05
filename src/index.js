@@ -3,6 +3,8 @@ import { load } from "./loader.js";
 import { badMacHandler } from "./utils/badMacHandler.js";
 import { bannerLog, errorLog, infoLog, warningLog } from "./utils/logger.js";
 import { startGroupScheduler } from "./services/groupScheduler.js";
+import { iniciarAgendaGrupo } from "./commands/admin/agendar-grupo.js";
+import { iniciarAgendamentos } from "./commands/admin/divulgar.js";
 import http from "node:http";
 
 process.on("uncaughtException", (error) => {
@@ -35,6 +37,8 @@ async function startBot() {
     const socket = await connect();
     load(socket);
     startGroupScheduler(socket);
+    iniciarAgendaGrupo(socket);
+    iniciarAgendamentos(socket);
     setInterval(() => {
       const currentStats = badMacHandler.getStats();
       if (currentStats.errorCount > 0) {
