@@ -16,12 +16,10 @@ function salvarAgenda(data) {
   fs.writeFileSync(AGENDA_FILE, JSON.stringify(data, null, 2));
 }
 
-// Cache de intervalos
 const timers = {};
 
 export function iniciarAgendaGrupo(socket) {
   const agenda = lerAgenda();
-  
   for (const [groupId, config] of Object.entries(agenda)) {
     agendarTarefa(socket, groupId, config);
   }
@@ -31,27 +29,25 @@ function agendarTarefa(socket, groupId, config) {
   const agora = new Date();
   const agoraMinutos = agora.getHours() * 60 + agora.getMinutes();
 
-  // Agendar fechar
+  // FECHAR
   if (config.fechar) {
     const [h, m] = config.fechar.split(":").map(Number);
-    const fecharMinutos = h * 60 + m;
+    let fecharMinutos = h * 60 + m;
     let delayFechar = fecharMinutos - agoraMinutos;
-    if (delayFechar < 0) delayFechar += 24 * 60; // próximo dia
-    
+    if (delayFechar < 0) delayFechar += 24 * 60;
+
     const keyF = groupId + "_fechar";
     if (timers[keyF]) clearTimeout(timers[keyF]);
-    
+
     timers[keyF] = setTimeout(async () => {
       try {
-        // Envia mensagem de boa noite
+        // Mensagem de boa noite
         if (config.boaNoiteMsg) {
           await socket.sendMessage(groupId, { text: config.boaNoiteMsg });
         }
-        // Fecha o grupo
-        await socket.sendMessage(groupId, { text: `/fechar` });
+        // Comando /fechar
         await socket.groupSettingUpdate(groupId, "announcement");
         console.log(`🔒 Grupo fechado: ${groupId}`);
-        // Reagenda para o próximo dia
         agendarTarefa(socket, groupId, config);
       } catch (e) {
         console.log(`Erro ao fechar: ${e.message}`);
@@ -59,19 +55,21 @@ function agendarTarefa(socket, groupId, config) {
     }, delayFechar * 60 * 1000);
   }
 
-  // Agendar abrir
+  // ABRIR
   if (config.abrir) {
     const [h, m] = config.abrir.split(":").map(Number);
-    const abrirMinutos = h * 60 + m;
+    let abrirMinutos = h * 60 + m;
     let delayAbrir = abrirMinutos - agoraMinutos;
     if (delayAbrir < 0) delayAbrir += 24 * 60;
-    
+
     const keyA = groupId + "_abrir";
     if (timers[keyA]) clearTimeout(timers[keyA]);
-    
+
     timers[keyA] = setTimeout(async () => {
       try {
+        // Comando /abrir
         await socket.groupSettingUpdate(groupId, "not_announcement");
+        // Mensagem de bom dia
         if (config.bomDiaMsg) {
           await socket.sendMessage(groupId, { text: config.bomDiaMsg });
         }
@@ -95,7 +93,6 @@ export default {
     remoteJid,
     socket,
     sendReply,
-    sendSuccessReply,
     sendErrorReply,
     sendSuccessReact,
   }) => {
@@ -109,7 +106,7 @@ export default {
           `• ${PREFIX}agendar-grupo mensagem | bomDia | texto\n` +
           `• ${PREFIX}agendar-grupo ver\n` +
           `• ${PREFIX}agendar-grupo cancelar\n` +
-          `⚠️ Bot precisa ser ADMIN no grupo!`
+          `⚠️ Bot precisa ser ADMIN!`
         );
       }
 
@@ -147,14 +144,12 @@ export default {
         agenda[remoteJid].fechar = horario;
         salvarAgenda(agenda);
 
-        // Cancela timer antigo
         const keyF = remoteJid + "_fechar";
         if (timers[keyF]) clearTimeout(timers[keyF]);
-
         agendarTarefa(socket, remoteJid, agenda[remoteJid]);
 
         await sendSuccessReact();
-        return sendReply(`🔒 Fechamento agendado para *${horario}*!\nUse \`/agendar-grupo mensagem | boaNoite | texto\` para personalizar.`);
+        return sendReply(`🔒 Fechamento agendado para *${horario}*!\nMsg: \`/agendar-grupo mensagem | boaNoite | texto\``);
       }
 
       // ABRIR
@@ -171,21 +166,17 @@ export default {
 
         const keyA = remoteJid + "_abrir";
         if (timers[keyA]) clearTimeout(timers[keyA]);
-
         agendarTarefa(socket, remoteJid, agenda[remoteJid]);
 
         await sendSuccessReact();
-        return sendReply(`🔓 Abertura agendada para *${horario}*!\nUse \`/agendar-grupo mensagem | bomDia | texto\` para personalizar.`);
+        return sendReply(`🔓 Abertura agendada para *${horario}*!\nMsg: \`/agendar-grupo mensagem | bomDia | texto\``);
       }
 
       // VER
       if (action === "ver" || action === "view") {
         const agenda = lerAgenda();
         const config = agenda[remoteJid];
-
-        if (!config || (!config.fechar && !config.abrir)) {
-          return sendReply("Nenhum agendamento configurado.");
-        }
+        if (!config || (!config.fechar && !config.abrir)) return sendReply("Nenhum agendamento.");
 
         let msg = "📋 *Agendamentos*\n\n";
         if (config.fechar) msg += `🔒 Fechar: ${config.fechar}\n`;
@@ -200,14 +191,10 @@ export default {
         const agenda = lerAgenda();
         delete agenda[remoteJid];
         salvarAgenda(agenda);
-
-        const keyF = remoteJid + "_fechar";
-        const keyA = remoteJid + "_abrir";
-        if (timers[keyF]) clearTimeout(timers[keyF]);
-        if (timers[keyA]) clearTimeout(timers[keyA]);
-
+        if (timers[remoteJid + "_fechar"]) clearTimeout(timers[remoteJid + "_fechar"]);
+        if (timers[remoteJid + "_abrir"]) clearTimeout(timers[remoteJid + "_abrir"]);
         await sendSuccessReact();
-        return sendReply("✅ Todos os agendamentos cancelados!");
+        return sendReply("✅ Agendamentos cancelados!");
       }
 
       throw new InvalidParameterError("Use: fechar, abrir, ver, cancelar ou mensagem");
