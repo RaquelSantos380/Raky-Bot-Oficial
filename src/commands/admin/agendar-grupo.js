@@ -16,68 +16,55 @@ function salvarAgenda(data) {
   fs.writeFileSync(AGENDA_FILE, JSON.stringify(data, null, 2));
 }
 
-const timers = {};
+let intervalId = null;
+let lastMinute = -1;
 
 export function iniciarAgendaGrupo(socket) {
-  const agenda = lerAgenda();
-  for (const [groupId, config] of Object.entries(agenda)) {
-    agendarTarefa(socket, groupId, config);
-  }
-}
+  if (intervalId) clearInterval(intervalId);
+  console.log("⏰ Agendador de grupo iniciado (setInterval)!");
+  lastMinute = -1;
 
-function agendarTarefa(socket, groupId, config) {
-  const agora = new Date();
-  const agoraMinutos = agora.getHours() * 60 + agora.getMinutes();
+  intervalId = setInterval(async () => {
+    try {
+      const agora = new Date();
+      const currentHour = agora.getHours().toString().padStart(2, "0");
+      const currentMinute = agora.getMinutes().toString().padStart(2, "0");
+      const currentTime = `${currentHour}:${currentMinute}`;
+      const currentMinuteNum = agora.getMinutes();
+      if (currentMinuteNum === lastMinute) return;
+      lastMinute = currentMinuteNum;
 
-  if (config.fechar) {
-    const [h, m] = config.fechar.split(":").map(Number);
-    let fecharMinutos = h * 60 + m;
-    let delayMinutos = fecharMinutos - agoraMinutos;
-    if (delayMinutos <= 0) delayMinutos += 24 * 60;
+      const agenda = lerAgenda();
 
-    const delayMs = delayMinutos * 60 * 1000;
-    console.log(`⏰ Agendado FECHAR em ${delayMinutos} minutos (${config.fechar})`);
-
-    const keyF = groupId + "_fechar";
-    if (timers[keyF]) clearTimeout(timers[keyF]);
-
-    timers[keyF] = setTimeout(async () => {
-      try {
-        await socket.groupSettingUpdate(groupId, "announcement");
-        console.log(`🔒 Grupo fechado: ${groupId}`);
-        if (config.msgFechar) {
-          await socket.sendMessage(groupId, { text: config.msgFechar });
+      for (const [groupId, config] of Object.entries(agenda)) {
+        if (config.fechar === currentTime) {
+          try {
+            await socket.groupSettingUpdate(groupId, "announcement");
+            console.log(`🔒 Grupo fechado: ${groupId} às ${currentTime}`);
+            if (config.msgFechar) {
+              await socket.sendMessage(groupId, { text: config.msgFechar });
+            }
+          } catch (e) {
+            console.log(`Erro ao fechar: ${e.message}`);
+          }
         }
-      } catch (e) {
-        console.log(`Erro ao fechar: ${e.message}`);
-      }
-    }, delayMs);
-  }
 
-  if (config.abrir) {
-    const [h, m] = config.abrir.split(":").map(Number);
-    let abrirMinutos = h * 60 + m;
-    let delayMinutos = abrirMinutos - agoraMinutos;
-    if (delayMinutos <= 0) delayMinutos += 24 * 60;
-
-    const delayMs = delayMinutos * 60 * 1000;
-    console.log(`⏰ Agendado ABRIR em ${delayMinutos} minutos (${config.abrir})`);
-
-    const keyA = groupId + "_abrir";
-    if (timers[keyA]) clearTimeout(timers[keyA]);
-
-    timers[keyA] = setTimeout(async () => {
-      try {
-        await socket.groupSettingUpdate(groupId, "not_announcement");
-        console.log(`🔓 Grupo aberto: ${groupId}`);
-        if (config.msgAbrir) {
-          await socket.sendMessage(groupId, { text: config.msgAbrir });
+        if (config.abrir === currentTime) {
+          try {
+            await socket.groupSettingUpdate(groupId, "not_announcement");
+            console.log(`🔓 Grupo aberto: ${groupId} às ${currentTime}`);
+            if (config.msgAbrir) {
+              await socket.sendMessage(groupId, { text: config.msgAbrir });
+            }
+          } catch (e) {
+            console.log(`Erro ao abrir: ${e.message}`);
+          }
         }
-      } catch (e) {
-        console.log(`Erro ao abrir: ${e.message}`);
       }
-    }, delayMs);
-  }
+    } catch (error) {
+      console.log(`Erro no agendador: ${error.message}`);
+    }
+  }, 30000);
 }
 
 export default {
@@ -119,9 +106,6 @@ export default {
         agenda[remoteJid].msgFechar = `Grupo fechado para a *segurança* de *vocês*! 🫶🏻🎀 Um bom descanso a todos! ✅Abrirá *cedo*`;
         salvarAgenda(agenda);
 
-        if (timers[remoteJid + "_fechar"]) clearTimeout(timers[remoteJid + "_fechar"]);
-        agendarTarefa(socket, remoteJid, agenda[remoteJid]);
-
         await sendSuccessReact();
         return sendReply(`🔒 Agendado para *${horario}*!`);
       }
@@ -137,9 +121,6 @@ export default {
         agenda[remoteJid].abrir = horario;
         agenda[remoteJid].msgAbrir = `☀️ Bom dia! O grupo está aberto!`;
         salvarAgenda(agenda);
-
-        if (timers[remoteJid + "_abrir"]) clearTimeout(timers[remoteJid + "_abrir"]);
-        agendarTarefa(socket, remoteJid, agenda[remoteJid]);
 
         await sendSuccessReact();
         return sendReply(`🔓 Agendado para *${horario}*!`);
@@ -159,8 +140,6 @@ export default {
         const agenda = lerAgenda();
         delete agenda[remoteJid];
         salvarAgenda(agenda);
-        if (timers[remoteJid + "_fechar"]) clearTimeout(timers[remoteJid + "_fechar"]);
-        if (timers[remoteJid + "_abrir"]) clearTimeout(timers[remoteJid + "_abrir"]);
         await sendSuccessReact();
         return sendReply("✅ Cancelado!");
       }
