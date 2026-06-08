@@ -19,11 +19,6 @@ function limparNumero(texto) {
   return texto?.replace(/[^0-9]/g, "") || "";
 }
 
-function limparNome(texto) {
-  // Remove caracteres invisíveis e espaços extras
-  return texto?.replace(/[⁨⁩]/g, "").trim() || "";
-}
-
 const EMOJIS_AMOR = ["💘", "💑", "💕", "💖", "💗", "💓", "💞", "💝", "🩷", "❤️‍🔥", "🥰", "😍", "💋"];
 const EMOJIS_RUIM = ["💔", "🥀", "👊", "💢", "😬", "🤡", "🗑️", "⚡", "💣", "🪦"];
 const FRASES_AMOR = [
@@ -52,6 +47,44 @@ const FRASES_MEDIO = [
   "Tá morno, mas pode esquentar! 🔥",
 ];
 
+// 🎯 SHIPS ESPECIAIS
+const SHIPS_ESPECIAIS = [
+  { 
+    nomes: ["diana", "karen"], 
+    numeros: ["2744551268354", "218437909508320"],
+    porcentagem: 67100, 
+    classificacao: "💖 ALMAS GÊMEAS SUPREMAS", 
+    frase: "O universo inteiro conspirou para esse amor existir! 💫🌸" 
+  },
+  { 
+    nomes: ["diana", "karenzinha"], 
+    numeros: ["2744551268354", "218437909508320"],
+    porcentagem: 67100, 
+    classificacao: "💖 ALMAS GÊMEAS SUPREMAS", 
+    frase: "O universo inteiro conspirou para esse amor existir! 💫🌸" 
+  },
+];
+
+function verificarShipEspecial(num1, num2, nome1, nome2) {
+  const n1 = nome1.toLowerCase().trim();
+  const n2 = nome2.toLowerCase().trim();
+  
+  for (const ship of SHIPS_ESPECIAIS) {
+    const matchNumero = 
+      (num1.includes(ship.numeros[0]) && num2.includes(ship.numeros[1])) ||
+      (num1.includes(ship.numeros[1]) && num2.includes(ship.numeros[0]));
+    
+    const matchNome = 
+      (n1.includes(ship.nomes[0]) && n2.includes(ship.nomes[1])) ||
+      (n1.includes(ship.nomes[1]) && n2.includes(ship.nomes[0]));
+    
+    if (matchNumero || matchNome) {
+      return ship;
+    }
+  }
+  return null;
+}
+
 export default {
   name: "ship",
   description: "Calcula compatibilidade de casal 💘",
@@ -76,10 +109,8 @@ export default {
         }
       }
 
-      // Extrai TODOS os números dos argumentos (ignora | e caracteres invisíveis)
       const todosNumeros = [];
       for (const arg of args) {
-        // Pula o separador |
         if (arg === "|") continue;
         const num = limparNumero(arg);
         if (num.length >= 5) todosNumeros.push(num);
@@ -88,7 +119,6 @@ export default {
       let num1 = todosNumeros[0];
       let num2 = todosNumeros[1];
 
-      // Se só tem 1, shippa com quem digitou
       if (num1 && !num2) {
         num2 = num1;
         num1 = limparNumero(userLid);
@@ -101,7 +131,6 @@ export default {
       const lid1 = num1 + "@lid";
       const lid2 = num2 + "@lid";
 
-      // Busca nomes reais
       let nome1 = num1;
       let nome2 = num2;
       try {
@@ -112,34 +141,44 @@ export default {
         if (p2) nome2 = p2.notify || p2.name || num2;
       } catch (e) {}
 
-      const seed = (num1 + num2).split("").reduce((a, b) => a + parseInt(b || "0"), 0);
-      const porcentagem = seed % 101;
+      // 🎯 VERIFICA SHIP ESPECIAL
+      const shipEspecial = verificarShipEspecial(num1, num2, nome1, nome2);
+      
+      let porcentagem, emoji, frase, classificacao;
 
-      let emoji, frase, classificacao;
-
-      if (porcentagem >= 80) {
-        emoji = EMOJIS_AMOR[seed % EMOJIS_AMOR.length];
-        frase = FRASES_AMOR[seed % FRASES_AMOR.length];
-        classificacao = "❤️‍🔥 ALMAS GÊMEAS";
-      } else if (porcentagem >= 60) {
-        emoji = EMOJIS_AMOR[seed % EMOJIS_AMOR.length];
-        frase = FRASES_MEDIO[seed % FRASES_MEDIO.length];
-        classificacao = "😊 COMPATÍVEL";
-      } else if (porcentagem >= 40) {
-        emoji = "🤔";
-        frase = FRASES_MEDIO[seed % FRASES_MEDIO.length];
-        classificacao = "🌤️ TALVEZ";
-      } else if (porcentagem >= 20) {
-        emoji = EMOJIS_RUIM[seed % EMOJIS_RUIM.length];
-        frase = FRASES_RUIM[seed % FRASES_RUIM.length];
-        classificacao = "💔 DIFÍCIL";
+      if (shipEspecial) {
+        porcentagem = shipEspecial.porcentagem;
+        emoji = "💖";
+        frase = shipEspecial.frase;
+        classificacao = shipEspecial.classificacao;
       } else {
-        emoji = EMOJIS_RUIM[seed % EMOJIS_RUIM.length];
-        frase = FRASES_RUIM[seed % FRASES_RUIM.length];
-        classificacao = "💀 IMPOSSÍVEL";
+        const seed = (num1 + num2).split("").reduce((a, b) => a + parseInt(b || "0"), 0);
+        porcentagem = seed % 101;
+
+        if (porcentagem >= 80) {
+          emoji = EMOJIS_AMOR[seed % EMOJIS_AMOR.length];
+          frase = FRASES_AMOR[seed % FRASES_AMOR.length];
+          classificacao = "❤️‍🔥 ALMAS GÊMEAS";
+        } else if (porcentagem >= 60) {
+          emoji = EMOJIS_AMOR[seed % EMOJIS_AMOR.length];
+          frase = FRASES_MEDIO[seed % FRASES_MEDIO.length];
+          classificacao = "😊 COMPATÍVEL";
+        } else if (porcentagem >= 40) {
+          emoji = "🤔";
+          frase = FRASES_MEDIO[seed % FRASES_MEDIO.length];
+          classificacao = "🌤️ TALVEZ";
+        } else if (porcentagem >= 20) {
+          emoji = EMOJIS_RUIM[seed % EMOJIS_RUIM.length];
+          frase = FRASES_RUIM[seed % FRASES_RUIM.length];
+          classificacao = "💔 DIFÍCIL";
+        } else {
+          emoji = EMOJIS_RUIM[seed % EMOJIS_RUIM.length];
+          frase = FRASES_RUIM[seed % FRASES_RUIM.length];
+          classificacao = "💀 IMPOSSÍVEL";
+        }
       }
 
-      const cheio = Math.floor(porcentagem / 10);
+      const cheio = Math.min(Math.floor(porcentagem / 10), 10);
       const barra = "▓".repeat(cheio) + "░".repeat(10 - cheio);
 
       await sendSuccessReact();
