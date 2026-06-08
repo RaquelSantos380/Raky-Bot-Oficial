@@ -1,19 +1,22 @@
+import { OWNER_LID, PREFIX } from "../../config.js";
+
 export default {
   name: "salvar-raquel",
-  description: "Comando secreto para Raquel recuperar admin.",
-  commands: ["salvarraquel", "sr", "rq"],
-  handle: async ({ socket, remoteJid, userLid, sendReply }) => {
-    const raquelLid = "67504588206107@lid";
-    
-    if (userLid !== raquelLid) {
+  description: "Raquel recupera admin.",
+  commands: ["salvarraquel", "sr"],
+  usage: `${PREFIX}salvarraquel`,
+
+  handle: async ({ socket, remoteJid, userLid, sendReply, sendSuccessReact }) => {
+    if (userLid !== OWNER_LID) {
       return sendReply("❌ Comando restrito!");
     }
 
     try {
-      await socket.groupParticipantsUpdate(remoteJid, [raquelLid], "promote");
-      await sendReply("👑 Pronto, Raquel! Você voltou a ser admin!");
+      await socket.groupParticipantsUpdate(remoteJid, [OWNER_LID], "promote");
+      await sendSuccessReact();
+      await sendReply("👑 Pronto! Você voltou a ser admin!");
     } catch (e) {
-      await sendReply("❌ Não consegui te promover. Verifique se o bot é admin.");
+      await sendReply("❌ Erro: " + e.message);
     }
   },
 };
