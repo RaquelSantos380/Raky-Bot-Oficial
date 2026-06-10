@@ -9,7 +9,7 @@ function setD(d) { fs.writeFileSync(DITADURA_FILE, JSON.stringify(d, null, 2)); 
 
 export default {
   name: "ditadura",
-  description: "Só Raquel fala no grupo.",
+  description: "Modo ditadura: só Raquel fala no grupo.",
   commands: ["ditadura", "ditador"],
   usage: `${PREFIX}ditadura 1 / 0`,
   handle: async ({ args, socket, remoteJid, userLid, sendReply, sendSuccessReact }) => {
@@ -21,17 +21,16 @@ export default {
     if (a === "1") {
       data[remoteJid] = true;
       setD(data);
-      await socket.groupSettingUpdate(remoteJid, "announcement");
+      // NÃO fecha o grupo, só ativa o modo
       await sendSuccessReact();
-      return sendReply("👑 *DITADURA ATIVADA!* Só você fala!");
+      return sendReply("👑 *DITADURA ATIVADA!* Só você fala! As mensagens dos outros serão apagadas.");
     }
 
     if (a === "0") {
       delete data[remoteJid];
       setD(data);
-      await socket.groupSettingUpdate(remoteJid, "not_announcement");
       await sendSuccessReact();
-      return sendReply("🔓 *DITADURA DESATIVADA!* Todos podem falar.");
+      return sendReply("🔓 *DITADURA DESATIVADA!* Todos podem falar novamente.");
     }
 
     return sendReply(`Use: ${PREFIX}ditadura 1 ou 0`);
