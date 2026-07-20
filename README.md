@@ -1,4 +1,4 @@
-# 🤖 Takeshi Bot
+# 🤖 Raky Bot
 
 ![Takeshi Bot](./assets/images/takeshi-bot.png)
 
